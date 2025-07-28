@@ -1,11 +1,15 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 // Async thunk: fetch unread counts for all friends
+
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
+
 export const fetchUnreadCounts = createAsyncThunk(
   'chat/fetchUnreadCounts',
   async (_, { rejectWithValue }) => {
     try {
-      const res = await fetch('/api/messages/unread', { credentials: 'include' });
+      const res = await fetch(`${API_URL}/api/messages/unread`, { credentials: 'include' });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed to fetch unread counts');
       return data.unreadCounts; // Expecting { userId: count }
