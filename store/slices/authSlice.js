@@ -40,6 +40,18 @@ export const signin = createAsyncThunk(
   }
 );
 
+export const checkToken = createAsyncThunk(
+  'auth/checkToken',
+  async (_, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/auth/check-token`, { withCredentials: true });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Token check failed');
+    }
+  }
+);
+
 export const verifyEmail = createAsyncThunk(
   'auth/verifyEmail',
   async (token, { rejectWithValue }) => {
@@ -255,6 +267,21 @@ const authSlice = createSlice({
         state.loading = false;
         state.error = action.payload;
       })
+
+       .addCase(checkToken.pending, (state) => {
+      state.loading = true;
+      state.error = null;
+    })
+    .addCase(checkToken.fulfilled, (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = action.payload.valid; // `check-token` ka response
+    })
+    .addCase(checkToken.rejected, (state, action) => {
+      state.loading = false;
+      state.isAuthenticated = false;
+      state.error = action.payload;
+    })
+
       .addCase(verifyEmail.pending, (state) => {
         state.loading = true;
         state.error = null;
