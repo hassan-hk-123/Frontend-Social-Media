@@ -40,18 +40,6 @@ export const signin = createAsyncThunk(
   }
 );
 
-export const checkToken = createAsyncThunk(
-  'auth/checkToken',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await axios.get(`${API_URL}/api/auth/check-token`, { withCredentials: true });
-      return response.data;
-    } catch (error) {
-      return rejectWithValue(error.response?.data?.message || 'Token check failed');
-    }
-  }
-);
-
 export const verifyEmail = createAsyncThunk(
   'auth/verifyEmail',
   async (token, { rejectWithValue }) => {
@@ -252,36 +240,16 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-     .addCase(signin.fulfilled, (state, action) => {
-  state.loading = false;
-  state.user = action.payload;
-  state.isAuthenticated = true;
-  // Cookie se token check
-  const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
-  if (token) {
-    state.token = token;
-    localStorage.setItem('user', JSON.stringify({ ...action.payload, token }));
-  }
-})
+      .addCase(signin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        localStorage.setItem('user', JSON.stringify(action.payload));
+      })
       .addCase(signin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
-
-       .addCase(checkToken.pending, (state) => {
-      state.loading = true;
-      state.error = null;
-    })
-    .addCase(checkToken.fulfilled, (state, action) => {
-      state.loading = false;
-      state.isAuthenticated = action.payload.valid; // `check-token` ka response
-    })
-    .addCase(checkToken.rejected, (state, action) => {
-      state.loading = false;
-      state.isAuthenticated = false;
-      state.error = action.payload;
-    })
-
       .addCase(verifyEmail.pending, (state) => {
         state.loading = true;
         state.error = null;
