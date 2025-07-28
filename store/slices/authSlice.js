@@ -240,12 +240,17 @@ const authSlice = createSlice({
         state.loading = true;
         state.error = null;
       })
-      .addCase(signin.fulfilled, (state, action) => {
-        state.loading = false;
-        state.user = action.payload;
-        state.isAuthenticated = true;
-        localStorage.setItem('user', JSON.stringify(action.payload));
-      })
+     .addCase(signin.fulfilled, (state, action) => {
+  state.loading = false;
+  state.user = action.payload;
+  state.isAuthenticated = true;
+  // Cookie se token check
+  const token = document.cookie.split('; ').find(row => row.startsWith('token='))?.split('=')[1];
+  if (token) {
+    state.token = token;
+    localStorage.setItem('user', JSON.stringify({ ...action.payload, token }));
+  }
+})
       .addCase(signin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
