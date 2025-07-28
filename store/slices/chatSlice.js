@@ -2,37 +2,38 @@ import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
 // Async thunk: fetch unread counts for all friends
 
+
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
 
-
+// ✅ 1. Fetch unread counts
 export const fetchUnreadCounts = createAsyncThunk(
   'chat/fetchUnreadCounts',
   async (_, { rejectWithValue }) => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
-      const res = await fetch(`${API_URL}/api/messages/unread`, { credentials: 'include' });
+      const res = await fetch(`${API_URL}/api/messages/unread`, {
+        credentials: 'include',
+      });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed to fetch unread counts');
-      return data.unreadCounts; // Expecting { userId: count }
+      return data.unreadCounts;
     } catch (err) {
       return rejectWithValue(err.message);
     }
   }
 );
 
-// Async thunk: fetch messages with a user
+// ✅ 2. Fetch messages
 export const fetchMessages = createAsyncThunk(
   'chat/fetchMessages',
   async (userId, { rejectWithValue, getState }) => {
     try {
-      const res = await fetch(`/api/messages/${userId}`, { credentials: 'include' });
+      const res = await fetch(`${API_URL}/api/messages/${userId}`, {
+        credentials: 'include',
+      });
       const data = await res.json();
       if (!data.success) throw new Error(data.error || 'Failed to fetch messages');
-      
-      // Get current user from auth state
       const state = getState();
       const currentUserId = state.auth.user?.userId;
-      
       return { userId, messages: data.messages, currentUserId };
     } catch (err) {
       return rejectWithValue(err.message);
@@ -40,12 +41,11 @@ export const fetchMessages = createAsyncThunk(
   }
 );
 
-// Async thunk: send a message
+// ✅ 3. Send message
 export const sendMessage = createAsyncThunk(
   'chat/sendMessage',
   async (payload, { rejectWithValue }) => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${API_URL}/api/messages/send`, {
         method: 'POST',
         headers: { 'Content-Type': 'application/json' },
@@ -61,12 +61,12 @@ export const sendMessage = createAsyncThunk(
   }
 );
 
-// Async thunk: mark messages as read
+// ✅ 4. Mark messages as read
 export const markAsRead = createAsyncThunk(
   'chat/markAsRead',
   async (userId, { rejectWithValue }) => {
     try {
-      const res = await fetch(`/api/messages/read/${userId}`, {
+      const res = await fetch(`${API_URL}/api/messages/read/${userId}`, {
         method: 'PUT',
         credentials: 'include',
       });
@@ -79,39 +79,31 @@ export const markAsRead = createAsyncThunk(
   }
 );
 
-// Async thunk: edit a message
+// ✅ 5. Edit message
 export const editMessage = createAsyncThunk(
   'chat/editMessage',
   async ({ messageId, content }, { rejectWithValue }) => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
-
       const res = await fetch(`${API_URL}/api/messages/${messageId}`, {
         method: 'PUT',
         headers: { 'Content-Type': 'application/json' },
         credentials: 'include',
         body: JSON.stringify({ content }),
       });
-
       const data = await res.json();
-
-      if (!data.success) {
-        throw new Error(data.error || 'Failed to edit message');
-      }
-
+      if (!data.success) throw new Error(data.error || 'Failed to edit message');
       return data.message;
     } catch (err) {
-      return rejectWithValue(err.message || 'Something went wrong');
+      return rejectWithValue(err.message);
     }
   }
 );
 
-// Async thunk: delete all messages
+// ✅ 6. Delete all messages
 export const deleteAllMessages = createAsyncThunk(
   'chat/deleteAllMessages',
   async (userId, { rejectWithValue }) => {
     try {
-      const API_URL = process.env.NEXT_PUBLIC_API_URL;
       const res = await fetch(`${API_URL}/api/messages/clear/${userId}`, {
         method: 'DELETE',
         credentials: 'include',
