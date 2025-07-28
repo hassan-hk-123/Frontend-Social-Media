@@ -1,0 +1,236 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+.signup-container-signup, .signup-container-signup * {
+  font-family: 'Poppins', sans-serif;
+}
+
+.signup-container-signup {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  position: relative;
+  background: #f5f7fa; /* Light theme background */
+  color: #222; /* Light theme text */
+  transition: background 0.3s, color 0.3s;
+  overflow: hidden; // Add this to prevent overflow
+}
+
+.image-section {
+  flex: 1;
+  position: fixed;
+  top: 0;
+  left: 0;
+  width: 50%;
+  height: 100vh;
+  display: none;
+  object-fit: cover;
+  background: #f5f7fa; // Add matching background
+  z-index: 1;
+}
+
+.form-section-signup {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: flex-start;
+  padding: 40px 2rem 40px;
+  background: #fff;
+  color: #222;
+  min-height: 100vh; // Add this
+  width: 100%; // Add this
+  position: relative; // Add this
+  z-index: 2;
+  
+  @media (min-width: 768px) {
+    width: 50%; // Add this
+    margin-left: 50%;
+    padding: 60px 2rem 60px;
+  }
+
+  .form-content-signup {
+    width: 100%;
+    max-width: 400px;
+
+    h1 {
+      margin-bottom: 0.5rem;
+      font-size: 2rem;
+      color: #222;
+    }
+
+    .subtitle-signup {
+      color: #65676b; /* Light theme text-subtle */
+      margin-bottom: 2rem;
+    }
+
+    .signup-button-signup {
+      width: 100%;
+      height: 45px;
+      margin-top: 1rem;
+    }
+
+    .error-message-signup {
+      color: #f52323; /* Light theme danger */
+      margin-bottom: 1rem;
+    }
+
+    .login-link-signup {
+      text-align: center;
+      margin-top: 1.5rem;
+    }
+  }
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 8px;
+  color: #222;
+}
+
+.subtitle-signup {
+  color: #65676b; /* Light theme text-subtle */
+  margin-bottom: 24px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.error-message-signup {
+  color: #f52323; /* Light theme danger */
+  margin-bottom: 16px;
+  font-size: 14px;
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Override Ant Design styles */
+.ant-form-item {
+  margin-bottom: 20px;
+}
+
+.ant-form-item-label > label {
+  font-weight: 500;
+  color: #333;
+  font-family: 'Poppins', sans-serif;
+}
+
+.ant-input,
+.ant-input-password {
+  height: 42px;
+  border-radius: 4px;
+  background: #fff;
+  color: #222;
+  border: 1.5px solid #43a047; /* Light theme primary */
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.ant-input:focus,
+.ant-input-password:focus {
+  border: 1.5px solid #7ac57d; /* Light theme accent */
+  box-shadow: 0 0 0 2px #7ac57d;
+}
+
+.ant-form-item-extra {
+  font-size: 12px;
+  color: #65676b; /* Light theme text-subtle */
+  font-family: 'Poppins', sans-serif;
+}
+
+.signup-button-signup {
+  width: 100%; /* Adjusted to full width for consistency */
+  height: 44px;
+  background-color: #43a047; /* Light theme primary */
+  border-color: #43a047;
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 16px;
+  font-family: 'Poppins', sans-serif;
+  margin-top: 8px;
+  color: #fff; /* Light theme primary-text */
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(67, 165, 71, 0.08);
+}
+
+.signup-button-signup:hover {
+  background-color: #7ac57d !important; /* Light theme accent */
+  border-color: #7ac57d;
+  color: #fff;
+  box-shadow: 0 4px 16px rgba(67, 165, 71, 0.13);
+}
+
+.login-link-signup {
+  margin-top: 16px;
+  font-family: 'Poppins', sans-serif;
+  margin-bottom: 60px;
+  color: #65676b; /* Light theme text-subtle */
+}
+
+.login-link-signup a {
+  color: #43a047; /* Light theme primary */
+  text-decoration: none;
+  font-family: 'Poppins', sans-serif;
+}
+
+.login-link-signup a:hover {
+  color: #7ac57d; /* Light theme accent */
+  text-decoration: underline;
+}
+
+/* Media query for larger screens */
+@media (min-width: 768px) {
+  .image-section {
+    display: block;
+  }
+}
+
+/* Custom input styles */
+.ant-input-password {
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+  
+  input[type="password"] {
+    height: 100% !important;
+    padding: 4px 12px !important;
+    border: none !important;
+    box-shadow: none !important;
+    
+    &:focus {
+      outline: none !important;
+    }
+  }
+}
+
+.ant-input-affix-wrapper {
+  height: 42px !important;
+  padding: 0 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  background: #fff !important;
+  border: 1.5px solid #43a047 !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease-in-out !important;
+
+  &:hover, &-focused {
+    border-color: #7ac57d !important;
+    box-shadow: 0 0 0 2px rgba(122, 197, 125, 0.2) !important;
+  }
+
+  .ant-input-prefix, 
+  .ant-input-suffix {
+    margin: 0 4px !important;
+    color: #666 !important;
+  }
+}
+
+// Remove any conflicting styles
+input[type="password"],
+.ant-input-password input {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+  
+  &:focus {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+}

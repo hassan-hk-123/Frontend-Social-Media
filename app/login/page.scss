@@ -1,0 +1,270 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+.signin-container, .signin-container * {
+  font-family: 'Poppins', sans-serif;
+}
+
+.signin-container {
+  display: flex;
+  min-height: 100vh;
+  font-family: 'Poppins', sans-serif;
+  width: 100%;
+  background: #f5f7fa; /* Light theme background */
+  color: #222; /* Light theme text */
+  transition: background 0.3s, color 0.3s;
+}
+
+.image-section {
+  flex: 1;
+  position: relative;
+  display: none;
+}
+
+.form-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: #fff; /* Light theme card */
+  color: #222; /* Light theme text */
+  transition: background 0.3s, color 0.3s;
+}
+
+.form-content {
+  width: 100%;
+  max-width: 400px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 24px;
+  color: #222; /* Light theme text */
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Override Ant Design styles */
+.ant-form-item {
+  margin-bottom: 20px;
+}
+
+.ant-form-item-label > label {
+  font-weight: 500;
+  font-family: 'Poppins', sans-serif;
+  color: #65676b; /* Light theme text-subtle */
+}
+
+.ant-input,
+.ant-input-password {
+  height: 42px;
+  border-radius: 4px;
+  font-family: 'Poppins', sans-serif;
+  background: #fff; /* Light theme card */
+  color: #222; /* Light theme text */
+  border: 1.5px solid #43a047 !important; /* Light theme primary */
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+/* Password field fixes */
+.ant-input-password {
+  padding: 0 !important;
+  border: none !important;
+  box-shadow: none !important;
+
+  input[type="password"] {
+    height: 100% !important;
+    padding: 4px 12px !important;
+    border: none !important;
+    box-shadow: none !important;
+
+    &:focus {
+      outline: none !important;
+    }
+  }
+}
+
+.ant-input-affix-wrapper {
+  height: 42px !important;
+  padding: 0 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  background: #fff !important;
+  border: 1.5px solid #43a047 !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease-in-out !important;
+
+  &:hover, &-focused {
+    border-color: #7ac57d !important;
+    box-shadow: 0 0 0 2px rgba(122, 197, 125, 0.2) !important;
+  }
+
+  .ant-input-prefix,
+  .ant-input-suffix {
+    margin: 0 4px !important;
+    color: #666 !important;
+  }
+}
+
+// Remove conflicting styles
+input[type="password"],
+.ant-input-password input {
+  border: none !important;
+  box-shadow: none !important;
+  outline: none !important;
+
+  &:focus {
+    border: none !important;
+    box-shadow: none !important;
+    outline: none !important;
+  }
+}
+
+// Remove old conflicting styles
+.ant-input-password,
+input[type="password"] {
+  &:focus, &:hover {
+    box-shadow: none !important;
+    border: none !important;
+  }
+}
+
+.forgot-password {
+  text-align: right;
+  margin-top: 4px;
+  font-family: 'Poppins', sans-serif;
+}
+
+.forgot-password a {
+  color: #65676b; /* Light theme text-subtle */
+  font-size: 14px;
+  text-decoration: none;
+}
+
+.forgot-password a:hover {
+  color: #7ac57d; /* Light theme accent */
+  text-decoration: underline;
+}
+
+.login-button {
+  width: 30%;
+  height: 44px;
+  background: #43a047; /* Light theme primary */
+  border-color: #43a047; /* Light theme primary */
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 16px;
+  margin-top: 8px;
+  font-family: 'Poppins', sans-serif;
+  color: #fff; /* Light theme primary-text */
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(67, 165, 71, 0.08);
+}
+
+.login-button:hover,
+.login-button:focus {
+  background: #7ac57d !important; /* Light theme accent */
+  border-color: #7ac57d;
+  color: #fff; /* Light theme accent-text */
+  box-shadow: 0 4px 16px rgba(67, 165, 71, 0.13);
+}
+
+.signup-link {
+  margin-top: 16px;
+  font-family: 'Poppins', sans-serif;
+  color: #65676b; /* Light theme text-subtle */
+}
+
+.signup-link a {
+  color: #43a047 !important; /* Light theme primary */
+  text-decoration: none;
+  font-family: 'Poppins', sans-serif;
+}
+
+.signup-link a:hover {
+  color: #7ac57d !important; /* Light theme accent */
+  text-decoration: underline;
+}
+
+/* Media query for larger screens */
+@media (min-width: 768px) {
+  .image-section {
+    display: block;
+  }
+}
+
+input[type="password"] {
+  height: 42px;
+  padding: 0 12px;
+  line-height: 48px;
+  box-sizing: border-box;
+  vertical-align: middle;
+  font-size: 16px;
+  background: #fff; /* Light theme card */
+  color: #222; /* Light theme text */
+  border: 1.5px solid #43a047; /* Light theme primary */
+}
+
+input[type="password"]:focus {
+  border: 1.5px solid #7ac57d; /* Light theme accent */
+  box-shadow: 0 0 0 2px #7ac57d;
+}
+
+/* Ant Design Input.Password wrapper */
+.ant-input-affix-wrapper {
+  height: 42px !important;
+  padding: 0 11px !important;
+  display: flex !important;
+  align-items: center !important;
+  background: #fff !important;
+  border: 1.5px solid #43a047 !important;
+  border-radius: 4px !important;
+  transition: all 0.2s ease-in-out !important;
+
+  &:hover, &-focused {
+    border-color: #7ac57d !important;
+    box-shadow: 0 0 0 2px rgba(122, 197, 125, 0.2) !important;
+  }
+
+  .ant-input-prefix,
+  .ant-input-suffix {
+    margin: 0 4px !important;
+    color: #666 !important;
+  }
+}
+
+.loginPage {
+  background: #fff; /* Light theme card */
+  color: #222; /* Light theme text */
+  border-radius: 16px;
+  box-shadow: 0 2px 16px rgba(67, 165, 71, 0.07);
+  transition: background 0.3s, color 0.3s;
+}
+
+.button, .loginBtn {
+  background: #43a047; /* Light theme primary */
+  color: #fff; /* Light theme primary-text */
+  border-radius: 8px;
+  border: none;
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(67, 165, 71, 0.08);
+}
+
+.button:hover, .loginBtn:hover {
+  background: #7ac57d; /* Light theme accent */
+  color: #fff; /* Light theme accent-text */
+  box-shadow: 0 4px 16px rgba(67, 165, 71, 0.13);
+}
+
+input, textarea {
+  background: #fff; /* Light theme card */
+  color: #222; /* Light theme text */
+  border: 1.5px solid #43a047; /* Light theme primary */
+  border-radius: 8px;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+input:focus, textarea:focus {
+  border: 1.5px solid #7ac57d; /* Light theme accent */
+  box-shadow: 0 0 0 2px #7ac57d;
+}

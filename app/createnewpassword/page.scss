@@ -1,0 +1,141 @@
+@import url('https://fonts.googleapis.com/css2?family=Poppins:wght@400;600;700&display=swap');
+
+.reset-password-container, .reset-password-container * {
+  font-family: 'Poppins', sans-serif;
+}
+
+/* Custom CSS for Reset Password page */
+.reset-password-container {
+  display: flex;
+  min-height: 100vh;
+  width: 100%;
+  background: #f5f7fa; /* Light theme background */
+  color: #222; /* Light theme text */
+  transition: background 0.3s, color 0.3s;
+}
+
+.image-section {
+  flex: 1;
+  position: relative;
+  display: none;
+  object-fit: cover;
+  overflow: hidden;
+  z-index: 1;
+
+  @media (min-width: 768px) {
+    display: block;
+  }
+}
+
+.form-section {
+  flex: 1;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+  padding: 2rem;
+  background: #fff; /* Light theme card */
+  color: #222; /* Light theme text */
+  z-index: 2;
+}
+
+.form-content {
+  width: 100%;
+  max-width: 400px;
+}
+
+h1 {
+  font-size: 28px;
+  font-weight: 600;
+  margin-bottom: 8px;
+  color: #222; /* Light theme text */
+}
+
+.subtitle {
+  color: #65676b; /* Light theme text-subtle */
+  margin-bottom: 24px;
+  font-size: 14px;
+}
+
+/* Override Ant Design styles */
+.ant-form-item {
+  margin-bottom: 20px;
+}
+
+.ant-form-item-label > label {
+  font-weight: 500;
+  color: #333; /* Light theme text */
+}
+
+.ant-input,
+.ant-input-password {
+  height: 42px;
+  border-radius: 4px;
+  background: #fff; /* Light theme card */
+  color: #222; /* Light theme text */
+  border: 1.5px solid #43a047; /* Light theme primary */
+  font-family: 'Poppins', sans-serif;
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.ant-input:focus,
+.ant-input-password:focus {
+  border: 1.5px solid #7ac57d; /* Light theme accent */
+  box-shadow: 0 0 0 2px #7ac57d;
+}
+
+.ant-form-item-extra {
+  font-size: 12px;
+  color: #65676b; /* Light theme text-subtle */
+}
+
+.error-message {
+  color: #f52323; /* Light theme danger */
+  margin-bottom: 16px;
+  font-size: 14px;
+}
+
+.reset-button {
+  width: 40%;
+  max-width: 180px;
+  height: 44px;
+  background-color: #43a047; /* Light theme primary */
+  border-color: #43a047; /* Light theme primary */
+  border-radius: 4px;
+  font-weight: 500;
+  font-size: 16px;
+  margin-top: 8px;
+  color: #fff; /* Light theme primary-text */
+  transition: background 0.2s, color 0.2s, box-shadow 0.2s;
+  box-shadow: 0 2px 8px rgba(67, 165, 71, 0.08);
+}
+
+.reset-button:hover,
+.reset-button:focus {
+  background-color: #7ac57d !important; /* Light theme accent */
+  border-color: #7ac57d;
+  color: #fff; /* Light theme accent-text */
+  box-shadow: 0 4px 16px rgba(67, 165, 71, 0.13);
+}
+
+/* Media query for larger screens */
+@media (min-width: 768px) {
+  .image-section {
+    display: block;
+  }
+}
+
+.ant-input-affix-wrapper {
+  height: 42px !important;
+  align-items: center !important;
+  font-size: 16px;
+  background: #fff; /* Light theme card */
+  border: 1.5px solid #43a047; /* Light theme primary */
+  border-radius: 4px;
+  color: #222; /* Light theme text */
+  transition: border 0.2s, box-shadow 0.2s;
+}
+
+.ant-input-affix-wrapper-focused {
+  border: 1.5px solid #7ac57d; /* Light theme accent */
+  box-shadow: 0 0 0 2px #7ac57d;
+}

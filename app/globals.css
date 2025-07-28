@@ -1,0 +1,51 @@
+/* Theme variables */
+:root {
+  --primary: #43a047;
+  --accent: #7ac57d;
+  --background: #f5f7fa;
+  --card: #fff;
+  --text: #222;
+  --accent-text: #fff;
+  --primary-text: #fff;
+  --danger: #f52323;
+  --text-subtle: #65676b;
+  --text-muted: #888;
+  --bg-hover: var(--accent);
+  --text-hover: var(--accent-text);
+}
+[data-theme="dark"] {
+  --primary: #43ea7f;
+  --accent: #1de9b6;
+  --background: #181c1f;
+  --card: #181c1f;
+  --text: #f5f7fa;
+  --accent-text: #222;
+  --primary-text: #222;
+  --danger: #f52323;
+  --text-subtle: #a8a8a8;
+  --text-muted: #666;
+  --bg-hover: #2a2e31;
+  --text-hover: var(--text);
+}
+
+body {
+  background: var(--background);
+  color: var(--text);
+  transition: background 0.3s, color 0.3s;
+}
+
+/* Example usage for cards and buttons */
+.card, .profileInfoCard, .profilePostsCard {
+  background: var(--card);
+  color: var(--text);
+}
+.button, .editProfileBtn, .profileCommentBtn {
+  background: var(--primary);
+  color: #fff;
+}
+.button-accent {
+  background: var(--accent);
+  color: #fff;
+}
+
+@import '~antd/dist/reset.css';

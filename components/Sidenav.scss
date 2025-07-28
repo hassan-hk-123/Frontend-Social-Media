@@ -1,0 +1,99 @@
+.sidebar {
+  position: fixed;
+  top: 76px; // <-- Navbar ki height ke barabar
+  left: 0;
+  height: calc(100vh - 64px); // <-- Navbar ke niche tak hi sidebar
+  width: 220px;
+  background: var(--card);
+  box-shadow: 2px 0 8px rgba(0,0,0,0.06);
+  display: flex;
+  flex-direction: column;
+  padding-top: 2rem;
+  z-index: 150; // Navbar se kam ya barabar
+  // animation: sidebar-slide-in 0.5s cubic-bezier(0.4,0,0.2,1);
+  // transition: width 0.2s;
+}
+
+.sidebar.collapsed {
+  width: 80px;
+}
+
+.sidebar.collapsed .sidebar-list li a {
+  justify-content: center;
+}
+
+.sidebar.collapsed .sidebar-list li a .sidebar-icon + span {
+  display: none;
+}
+
+@keyframes sidebar-slide-in {
+  from { transform: translateX(-100%); opacity: 0; }
+  to { transform: translateX(0); opacity: 1; }
+}
+
+.sidebar-list {
+  list-style: none;
+  padding: 0;
+  margin: 0;
+  display: flex;
+  flex-direction: column;
+  gap: 1.5rem;
+}
+
+.sidebar-list li {
+  width: 100%;
+}
+
+.sidebar-list li a {
+  display: flex;
+  align-items: center;
+  gap: 1rem;
+  padding: 0.75rem 1.5rem;
+  border-radius: 8px;
+  color: var(--primary);
+  font-size: 1.1rem;
+  font-weight: 500;
+  text-decoration: none;
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-list li a .sidebar-icon {
+  font-size: 22px;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 36px;
+  height: 36px;
+  border-radius: 50%;
+  background: var(--background);
+  color: var(--primary);
+  transition: background 0.2s, color 0.2s;
+}
+
+.sidebar-list li a.active {
+  background: var(--primary);
+  color: var(--primary-text);
+  box-shadow: 0 2px 8px rgba(67, 234, 127, 0.1);
+}
+
+.sidebar-list li a:hover:not(.active) {
+  background: var(--bg-hover);
+  color: var(--text-hover);
+  box-shadow: 0 2px 8px rgba(67, 234, 127, 0.1);
+}
+
+.sidebar-list li a.active .sidebar-icon {
+  background: var(--primary);
+  color: var(--primary-text);
+}
+
+.sidebar-list li a:hover:not(.active) .sidebar-icon {
+  background: var(--bg-hover);
+  color: var(--text-hover);
+}
+
+@media (max-width: 900px) {
+  .sidebar {
+    display: none;
+  }
+} 
