@@ -6,7 +6,8 @@ import { UserOutlined, MessageOutlined, BellOutlined, HomeOutlined, SearchOutlin
 import { Input, Badge, notification, Modal, List, Avatar, Spin } from "antd";
 import "./Navbar.scss";
 import { useSelector, useDispatch } from 'react-redux';
-import socket from '../store/socket';
+// ❌ REMOVED: socket import - useChatSocket handles all socket connections
+// import socket from '../store/socket';
 import { useTheme } from '../app/providers';
 import { FaMoon, FaSun } from 'react-icons/fa';
 import { FiLogOut } from 'react-icons/fi';
@@ -39,6 +40,7 @@ export default function Navbar() {
   const navbarRef = useRef(null);
   const modalRef = useRef(null);
 
+// ❌ REMOVED: Socket connection logic - useChatSocket handles this
 useEffect(() => {
   if (!user?.userId) return;
 
@@ -46,6 +48,9 @@ useEffect(() => {
   dispatch(fetchRequests());
   dispatch(fetchUnreadCounts());
   dispatch(fetchNotifications()); // Fetch initial notifications
+  
+  // ❌ REMOVED: All socket logic moved to useChatSocket
+  /*
   socket.connect();
   socket.emit("register", user.userId.toString());
   socket.on("connect", () => {
@@ -90,6 +95,7 @@ useEffect(() => {
     socket.off('connect_error');
     socket.disconnect();
   };
+  */
 }, [dispatch, user?.userId]);
 
 const handleNotifModalOpen = () => {

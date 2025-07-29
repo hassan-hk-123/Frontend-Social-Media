@@ -87,12 +87,20 @@ const useChatSocket = () => {
       dispatch(clearUnread(data.userId))
     })
 
+    // ✅ ADDED: Handle all notifications here instead of Navbar
     socket.on("notification", (notification) => {
       if (notification.to === user.userId) {
         dispatch(addNotification(notification))
+        
+        // Show notification popup
+        let message = notification.message;
+        if (notification.type === 'post_like' || notification.type === 'post_comment') {
+          message = `${notification.message} - View Post`;
+        }
+        
         notify.open({
-          message: notification.message,
-          description: `From: ${notification.from.fullName || notification.from.username}`,
+          message: "Notification",
+          description: message,
           placement: "topRight",
         })
       }
@@ -104,6 +112,11 @@ const useChatSocket = () => {
       dispatch(fetchUnreadCounts())
     })
 
+    // ✅ ADDED: Connection error handling
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+    })
+
     return () => {
       socket.off("online_users")
       socket.off("receive_message")
@@ -111,8 +124,9 @@ const useChatSocket = () => {
       socket.off("user_typing")
       socket.off("message_delivered")
       socket.off("message_read")
-      socket.off("notification")
+      socket.off("notification") // ✅ ADDED: Clean up notification listener
       socket.off("connect")
+      socket.off("connect_error") // ✅ ADDED: Clean up error listener
       socket.disconnect()
     }
   }, [user, dispatch, currentChatUser])
