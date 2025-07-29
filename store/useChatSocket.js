@@ -30,23 +30,20 @@ const useChatSocket = () => {
       dispatch(setOnlineUsers(userIds || []))
     })
 
-socket.on("message_sent", (data) => {
-  if (data.messageId) {
-    dispatch(updateMessageStatus({
-      messageId: data.messageId,
-      status: "sent",
-      userId: data.userId,
-    }));
-  } else {
-    dispatch(addMessage(data)); // Full message object
-  }
-});
+    socket.on("message_sent", (data) => {
+      if (data.messageId) {
+        dispatch(updateMessageStatus({
+          messageId: data.messageId,
+          status: "sent",
+          userId: data.userId,
+        }));
+      } else {
+        dispatch(addMessage(data)); // Full message object
+      }
+    });
 
-  socket.on("message_sent", (message) => {
-  dispatch(addMessage(message)); // No increment for sender
-});
-socket.on("receive_message", (message) => {
-  if (message.from._id !== user.userId) {
+   socket.on("receive_message", (message) => {
+  if (message.to._id === user.userId && message.from._id !== user.userId) { // Strict receiver check
     dispatch(addMessage(message));
     if (message.from._id !== currentChatUser?._id) {
       dispatch(incrementUnread(message.from._id));
@@ -60,7 +57,7 @@ socket.on("receive_message", (message) => {
       dispatch(clearUnread(message.from._id));
     }
   }
-});
+    });
 
     socket.on("user_typing", (data) => {
       dispatch(setTyping({ userId: data.from, typing: data.typing }))
@@ -87,7 +84,6 @@ socket.on("receive_message", (message) => {
       dispatch(clearUnread(data.userId))
     })
 
-    // ✅ ADDED: Handle all notifications here instead of Navbar
     socket.on("notification", (notification) => {
       if (notification.to === user.userId) {
         dispatch(addNotification(notification))
@@ -106,13 +102,11 @@ socket.on("receive_message", (message) => {
       }
     })
 
-    // Refresh unread counts on reconnection
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id)
       dispatch(fetchUnreadCounts())
     })
 
-    // ✅ ADDED: Connection error handling
     socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error.message);
     })
