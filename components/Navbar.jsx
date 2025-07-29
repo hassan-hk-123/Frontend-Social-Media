@@ -15,6 +15,8 @@ import { fetchUnreadCounts } from '../store/slices/chatSlice';
 import { markAllRead, addNotification, fetchNotifications, markNotificationsRead } from '../store/slices/notificationsSlice';
 import { logoutUser } from '../store/slices/authSlice';
 
+const API_URL = process.env.NEXT_PUBLIC_API_URL;
+
 export default function Navbar() {
   const dispatch = useDispatch();
   const router = useRouter();
@@ -126,7 +128,7 @@ const handleNotifModalOpen = () => {
     setSearchLoading(true);
     searchTimeout.current = setTimeout(async () => {
       try {
-        const response = await fetch(`/api/relationships/all-users`, { credentials: 'include' });
+        const response = await fetch(`${API_URL}/api/relationships/all-users`, { credentials: 'include' }, { withCredentials: true });
         const allUsers = await response.json();
         const val = value.toLowerCase();
         const data = allUsers.filter((u) =>

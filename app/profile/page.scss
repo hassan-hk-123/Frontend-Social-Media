@@ -623,6 +623,9 @@
   color: var(--text);
   gap: 4px;
   font-size: 1rem;
+  span{
+    color: var(--primary);
+  }
   input[type="file"] {
     margin-top: 4px;
   }
@@ -636,6 +639,8 @@
     background: #f0f2f5;
   }
 }
+
+
 
 // --- Fields Grid ---
 .editProfileFieldsGrid {
