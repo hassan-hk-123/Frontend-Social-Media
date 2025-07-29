@@ -257,7 +257,7 @@ const handleNotifModalOpen = () => {
                     <UserOutlined style={{ fontSize: 32, marginRight: 10 }} />
                   )}
                 </Link>
-                <span style={{ fontWeight: 500 }}>{user?.username || 'User'}</span>
+                <span  className="modal-username" style={{ fontWeight: 500 }}>{user?.username || 'User'}</span>
               </div>
               <div className="profile-dropdown-row theme-toggle-row">
                 <button
