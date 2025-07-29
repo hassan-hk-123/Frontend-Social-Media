@@ -662,7 +662,10 @@
   display: flex;
   align-items: center;
   margin-bottom: 0;
-  input, textarea {
+
+  input,
+  textarea,
+  .ant-picker {
     width: 100%;
     border: 1.5px solid #e4e6eb;
     border-radius: 8px;
@@ -686,6 +689,7 @@
       z-index: 1;
     }
   }
+
   label {
     position: absolute;
     left: 38px;
@@ -696,17 +700,19 @@
     transition: 0.18s;
     background: transparent;
   }
+
   .inputIcon {
     position: absolute;
     left: 10px;
     top: 50%;
     transform: translateY(-50%);
-    color: #b0b3b8;
+    color: var(--primary); // Primary color yahan
     font-size: 1.1rem;
     z-index: 2;
     pointer-events: none;
   }
 }
+
 .textareaGroup {
   margin-top: 6px;
   textarea {
@@ -718,6 +724,26 @@
     left: 38px;
     top: 18px;
   }
+}
+
+// DatePicker specific styling
+.inputGroup .ant-picker {
+  height: 44px;
+  display: flex;
+  align-items: center;
+  padding-left: 38px !important;
+}
+
+.inputGroup .ant-picker-input input {
+  border: none !important;
+  background: transparent !important;
+  padding: 0 !important;
+  font-size: 1rem;
+}
+
+.inputGroup .ant-picker-suffix {
+  color: var(--primary); // Calendar icon color
+  font-size: 20px;
 }
 
 // --- Save Button (VIP) ---

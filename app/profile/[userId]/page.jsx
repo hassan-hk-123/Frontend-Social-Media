@@ -597,12 +597,17 @@ const DynamicProfilePage = () => {
                         </div>
                         <div className="inputGroup">
                           <input type="text" name="study" value={editData.study} onChange={handleEditChange} required placeholder=" " />
-                          <label>Studies</label>
+                          <label>Qalification</label>
                         </div>
                         <div className="inputGroup">
-                          <DatePicker value={editData.dob} onChange={handleDateChange} style={{ width: '100%', height: 44, paddingLeft: 38 }} format="YYYY-MM-DD" suffixIcon={<FaRegCalendarAlt style={{ color: '#1877f2', fontSize: 20 }} />} />
-                          <label>Date of Birth</label>
-                        </div>
+                        <DatePicker
+                          value={editData.dob}
+                          onChange={handleDateChange}
+                          format="YYYY-MM-DD"
+                          suffixIcon={<FaRegCalendarAlt />} // Inline style remove
+                        />
+                        <label>Date of Birth</label>
+                      </div>
                       </div>
                       <div className="inputGroup textareaGroup">
                         <textarea name="bio" value={editData.bio} onChange={handleEditChange} rows={2} required placeholder=" " maxLength={40} />
