@@ -2,6 +2,7 @@
 
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
+import { debounce } from 'lodash' // Install lodash: npm install lodash
 import socket from "./socket"
 import {
   addMessage,
@@ -11,6 +12,7 @@ import {
   incrementUnread,
   clearUnread,
   fetchUnreadCounts,
+  fetchMessages,
 } from "./slices/chatSlice"
 import { addNotification } from "./slices/notificationsSlice"
 import { notify } from "../components/AppNotifications"
@@ -20,15 +22,51 @@ const useChatSocket = () => {
   const user = useSelector((state) => state.auth.user)
   const { currentChatUser } = useSelector((state) => state.chat)
 
-  useEffect(() => {
-    if (!user?.userId) return
+  const debouncedFetchUnreadCounts = debounce(() => dispatch(fetchUnreadCounts()), 1000);
 
-    socket.connect()
-    socket.emit("register", user.userId)
+  useEffect(() => {
+    if (!user?.userId) return;
+
+    socket.connect();
+    socket.emit("register", user.userId);
+
+    // Heartbeat to keep connection alive
+    const heartbeatInterval = setInterval(() => {
+      if (socket.connected) {
+        socket.emit("heartbeat", { userId: user.userId });
+      }
+    }, 30000);
+
+    // Polling fallback if socket is disconnected
+    const pollMessages = () => {
+      if (!socket.connected && currentChatUser) {
+        dispatch(fetchMessages(currentChatUser._id));
+      }
+    };
+    const pollInterval = setInterval(pollMessages, 10000);
+
+    socket.on("connect", () => {
+      console.log("Socket connected:", socket.id);
+      // notify.success({ message: "Connected to chat server" });
+      debouncedFetchUnreadCounts();
+      if (currentChatUser) {
+        dispatch(fetchMessages(currentChatUser._id));
+      }
+    });
+
+    socket.on("connect_error", (error) => {
+      console.error("Socket Connect Error:", error.message);
+      notify.error({ message: "Connection lost, trying to reconnect..." });
+    });
+
+    socket.on("reconnect", (attempt) => {
+      console.log(`Reconnected after ${attempt} attempts`);
+      debouncedFetchUnreadCounts();
+    });
 
     socket.on("online_users", (userIds) => {
-      dispatch(setOnlineUsers(userIds || []))
-    })
+      dispatch(setOnlineUsers(userIds || []));
+    });
 
     socket.on("message_sent", (data) => {
       dispatch(
@@ -36,35 +74,33 @@ const useChatSocket = () => {
           messageId: data.messageId,
           status: "sent",
           userId: data.userId,
-        }),
-      )
-    })
+        })
+      );
+    });
 
     socket.on("receive_message", (message) => {
-      dispatch(addMessage(message))
-      const fromId = message.from._id
-      const currentChatId = currentChatUser?._id
+      dispatch(addMessage(message));
+      const fromId = message.from._id;
+      const currentChatId = currentChatUser?._id;
 
-      // Only increment unread if message is not from current user and not in active chat
       if (fromId !== user.userId) {
         if (fromId !== currentChatId) {
-          dispatch(incrementUnread(fromId))
+          dispatch(incrementUnread(fromId));
           notify.info({
             message: `New message from ${message.from.fullName || message.from.username}`,
             description: message.content,
             placement: "topRight",
-          })
+          });
         } else {
-          // If in active chat, mark as read immediately
-          socket.emit("read_message", { messageId: message._id, userId: user.userId })
-          dispatch(clearUnread(fromId))
+          socket.emit("read_message", { messageId: message._id, userId: user.userId });
+          dispatch(clearUnread(fromId));
         }
       }
-    })
+    });
 
     socket.on("user_typing", (data) => {
-      dispatch(setTyping({ userId: data.from, typing: data.typing }))
-    })
+      dispatch(setTyping({ userId: data.from, typing: data.typing }));
+    });
 
     socket.on("message_delivered", (data) => {
       dispatch(
@@ -72,9 +108,9 @@ const useChatSocket = () => {
           messageId: data.messageId,
           status: "delivered",
           userId: data.userId,
-        }),
-      )
-    })
+        })
+      );
+    });
 
     socket.on("message_read", (data) => {
       dispatch(
@@ -82,42 +118,40 @@ const useChatSocket = () => {
           messageId: data.messageId,
           status: "read",
           userId: data.userId,
-        }),
-      )
-      dispatch(clearUnread(data.userId))
-    })
+        })
+      );
+      dispatch(clearUnread(data.userId));
+    });
 
     socket.on("notification", (notification) => {
       if (notification.to === user.userId) {
-        dispatch(addNotification(notification))
+        dispatch(addNotification(notification));
         notify.open({
           message: notification.message,
           description: `From: ${notification.from.fullName || notification.from.username}`,
           placement: "topRight",
-        })
+        });
       }
-    })
-
-    // Refresh unread counts on reconnection
-    socket.on("connect", () => {
-      console.log("Socket connected:", socket.id)
-      dispatch(fetchUnreadCounts())
-    })
+    });
 
     return () => {
-      socket.off("online_users")
-      socket.off("receive_message")
-      socket.off("message_sent")
-      socket.off("user_typing")
-      socket.off("message_delivered")
-      socket.off("message_read")
-      socket.off("notification")
-      socket.off("connect")
-      socket.disconnect()
-    }
-  }, [user, dispatch, currentChatUser])
+      clearInterval(heartbeatInterval);
+      clearInterval(pollInterval);
+      socket.off("online_users");
+      socket.off("receive_message");
+      socket.off("message_sent");
+      socket.off("user_typing");
+      socket.off("message_delivered");
+      socket.off("message_read");
+      socket.off("notification");
+      socket.off("connect");
+      socket.off("connect_error");
+      socket.off("reconnect");
+      socket.disconnect();
+    };
+  }, [user, dispatch, currentChatUser]);
 
-  return null
-}
+  return null;
+};
 
-export default useChatSocket
+export default useChatSocket;

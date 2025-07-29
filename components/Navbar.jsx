@@ -1,8 +1,9 @@
 "use client";
+
 import Link from "next/link";
 import React, { useEffect, useState, useRef } from 'react';
 import { usePathname, useRouter } from "next/navigation";
-import { UserOutlined, MessageOutlined, BellOutlined, HomeOutlined, SearchOutlined, InfoCircleOutlined } from '@ant-design/icons';
+import { UserOutlined, MessageOutlined, BellOutlined, HomeOutlined, SearchOutlined } from '@ant-design/icons';
 import { Input, Badge, notification, Modal, List, Avatar, Spin } from "antd";
 import "./Navbar.scss";
 import { useSelector, useDispatch } from 'react-redux';
@@ -10,9 +11,19 @@ import socket from '../store/socket';
 import { useTheme } from '../app/providers';
 import { FaMoon, FaSun } from 'react-icons/fa';
 import { FiLogOut } from 'react-icons/fi';
-import { fetchFriends, fetchRequests, fetchSentRequests } from '../store/slices/friendSlice';
+import {
+  fetchFriends,
+  fetchRequests,
+  fetchSentRequests,
+  addIncomingRequest
+} from '../store/slices/friendSlice';
 import { fetchUnreadCounts } from '../store/slices/chatSlice';
-import { markAllRead, addNotification, fetchNotifications, markNotificationsRead } from '../store/slices/notificationsSlice';
+import {
+  markAllRead,
+  addNotification,
+  fetchNotifications,
+  markNotificationsRead
+} from '../store/slices/notificationsSlice';
 import { logoutUser } from '../store/slices/authSlice';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
@@ -37,65 +48,55 @@ export default function Navbar() {
   const searchRef = useRef(null);
   const searchTimeout = useRef(null);
   const navbarRef = useRef(null);
-  const modalRef = useRef(null);
+  const modalWrapperRef = useRef(null);
 
-useEffect(() => {
-  if (!user?.userId) return;
+  useEffect(() => {
+    if (!user?.userId) return;
 
-  dispatch(fetchFriends());
-  dispatch(fetchRequests());
-  dispatch(fetchUnreadCounts());
-  dispatch(fetchNotifications()); // Fetch initial notifications
-  socket.connect();
-  socket.emit("register", user.userId.toString());
-  socket.on("connect", () => {
-    console.log("Socket connected:", socket.id);
-  });
-  socket.on("notification", (data) => {
-    console.log('Notification received:', data);
-    if (data) {
-      dispatch(addNotification(data));
-      if (data.type === 'friend_request') {
-        if (typeof dispatch.addIncomingRequest === 'function') {
+    dispatch(fetchFriends());
+    dispatch(fetchRequests());
+    dispatch(fetchUnreadCounts());
+    dispatch(fetchNotifications());
+
+    socket.on("notification", (data) => {
+      console.log('Notification received:', data);
+      if (data) {
+        dispatch(addNotification(data));
+        if (data.type === 'friend_request') {
           dispatch(addIncomingRequest(data.request));
-        } else {
-          console.warn('addIncomingRequest not available, refreshing requests');
-          dispatch(fetchRequests());
         }
+        if (data.type === 'request_accepted' || data.type === 'request_rejected') {
+          dispatch(fetchSentRequests());
+        }
+        let message = data.message;
+        if (data.type === 'post_like' || data.type === 'post_comment') {
+          message = (
+            <span>
+              {data.message} <Link href={`/post/${data.postId}`}>View Post</Link>
+            </span>
+          );
+        }
+        notification.open({
+          message: "Notification",
+          description: message,
+        });
       }
-      if (data.type === 'request_accepted' || data.type === 'request_rejected') {
-        dispatch(fetchSentRequests());
-      }
-      let message = data.message;
-      if (data.type === 'post_like' || data.type === 'post_comment') {
-        message = (
-          <span>
-            {data.message} <Link href={`/post/${data.postId}`}>View Post</Link>
-          </span>
-        );
-      }
-      notification.open({
-        message: "Notification",
-        description: message,
-      });
-    }
-  });
-  socket.on('connect_error', (error) => {
-    console.error('Socket connection error:', error.message);
-  });
+    });
 
-  return () => {
-    socket.off("notification");
-    socket.off('connect');
-    socket.off('connect_error');
-    socket.disconnect();
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+    });
+
+    return () => {
+      socket.off("notification");
+      socket.off('connect_error');
+    };
+  }, [dispatch, user?.userId]);
+
+  const handleNotifModalOpen = () => {
+    setNotifModalOpen(true);
+    dispatch(markNotificationsRead());
   };
-}, [dispatch, user?.userId]);
-
-const handleNotifModalOpen = () => {
-  setNotifModalOpen(true);
-  dispatch(markNotificationsRead());
-};
 
   const handleCustomModalOpen = () => {
     setCustomModalOpen(true);
@@ -128,7 +129,7 @@ const handleNotifModalOpen = () => {
     setSearchLoading(true);
     searchTimeout.current = setTimeout(async () => {
       try {
-        const response = await fetch(`${API_URL}/api/relationships/all-users`, { credentials: 'include' }, { withCredentials: true });
+        const response = await fetch(`${API_URL}/api/relationships/all-users`, { credentials: 'include' });
         const allUsers = await response.json();
         const val = value.toLowerCase();
         const data = allUsers.filter((u) =>
@@ -152,13 +153,12 @@ const handleNotifModalOpen = () => {
     router.push(`/profile/${userId}`);
   };
 
-  // Handle click outside to close modals and dropdown
   useEffect(() => {
     const handleClickOutside = (event) => {
       if (
         isCustomModalOpen &&
-        modalRef.current &&
-        !modalRef.current.contains(event.target) &&
+        modalWrapperRef.current &&
+        !modalWrapperRef.current.contains(event.target) &&
         navbarRef.current &&
         !navbarRef.current.contains(event.target)
       ) {
@@ -242,7 +242,6 @@ const handleNotifModalOpen = () => {
             </span>
           </Badge>
         </li>
-      
         <li style={{ position: 'relative' }}>
           <span onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
             {user?.avatarImg
@@ -259,7 +258,7 @@ const handleNotifModalOpen = () => {
                     <UserOutlined style={{ fontSize: 32, marginRight: 10 }} />
                   )}
                 </Link>
-                <span  className="modal-username" style={{ fontWeight: 500 }}>{user?.username || 'User'}</span>
+                <span className="modal-username" style={{ fontWeight: 500 }}>{user?.username || 'User'}</span>
               </div>
               <div className="profile-dropdown-row theme-toggle-row">
                 <button
@@ -283,52 +282,54 @@ const handleNotifModalOpen = () => {
           )}
         </li>
       </ul>
-    <Modal
-  open={isNotifModalOpen}
-  onCancel={() => setNotifModalOpen(false)}
-  footer={null}
-  title="Notifications"
-  width={380}
->
-  {notifications.length === 0 ? (
-    <div style={{ textAlign: 'center', color: '#888', padding: '32px 0', fontSize: 16 }}>
-      Nothing updated yet
-    </div>
-  ) : (
-    <List
-      dataSource={notifications}
-      renderItem={(item) => (
-        <List.Item style={{ background: item.read ? "#f7f7f7" : "#e6f7ff", borderRadius: 6, marginBottom: 4 }}>
-          <List.Item.Meta
-            avatar={<Avatar src={item.from?.avatarImg || "/login.jpeg"} />}
-            title={item.from?.username || "User"}
-            description={
-              item.type === 'post_like' || item.type === 'post_comment' ? (
-                <span>
-                  {item.message} <Link href={`/profile/${item.to ? item.to.toString() : ''}`}> View Post </Link>
-                </span>
-              ) : (
-                item.message
-              )
-            }
-          />
-        </List.Item>
-      )}
-    />
-  )}
-</Modal>
 
       <Modal
-        open={isCustomModalOpen}
-        onCancel={() => setCustomModalOpen(false)}
+        open={isNotifModalOpen}
+        onCancel={() => setNotifModalOpen(false)}
         footer={null}
-        title="Info"
-        width={300}
-        style={{ top: 60 }}
-        ref={modalRef}
+        title="Notifications"
+        width={380}
       >
-        <p>Welcome to TalkHub! Click anywhere to close this modal.</p>
+        {notifications.length === 0 ? (
+          <div style={{ textAlign: 'center', color: '#888', padding: '32px 0', fontSize: 16 }}>
+            Nothing updated yet
+          </div>
+        ) : (
+          <List
+            dataSource={notifications}
+            renderItem={(item) => (
+              <List.Item style={{ background: item.read ? "#f7f7f7" : "#e6f7ff", borderRadius: 6, marginBottom: 4 }}>
+                <List.Item.Meta
+                  avatar={<Avatar src={item.from?.avatarImg || "/login.jpeg"} />}
+                  title={item.from?.username || "User"}
+                  description={
+                    item.type === 'post_like' || item.type === 'post_comment' ? (
+                      <span>
+                        {item.message} <Link href={`/profile/${item.to ? item.to.toString() : ''}`}> View Post </Link>
+                      </span>
+                    ) : (
+                      item.message
+                    )
+                  }
+                />
+              </List.Item>
+            )}
+          />
+        )}
       </Modal>
+
+      <div ref={modalWrapperRef}>
+        <Modal
+          open={isCustomModalOpen}
+          onCancel={() => setCustomModalOpen(false)}
+          footer={null}
+          title="Info"
+          width={300}
+          style={{ top: 60 }}
+        >
+          <p>Welcome to TalkHub! Click anywhere to close this modal.</p>
+        </Modal>
+      </div>
     </nav>
   );
 }
