@@ -88,15 +88,15 @@ const ChatPage = () => {
     }
   }, [user, dispatch])
 
-  useEffect(() => {
-    const targetUserId = searchParams.get("user")
-    if (targetUserId && friends.length > 0 && !friendsLoading) {
-      const targetFriend = friends.find((f) => f._id === targetUserId)
-      if (targetFriend && (!currentChatUser || currentChatUser._id !== targetUserId)) {
-        handleSelectFriend(targetFriend)
-      }
+useEffect(() => {
+  const targetUserId = searchParams.get("user");
+  if (targetUserId && friends.length > 0 && !friendsLoading) {
+    const targetFriend = friends.find((f) => f._id === targetUserId);
+    if (targetFriend && (!currentChatUser || currentChatUser._id !== targetUserId)) {
+      handleSelectFriend(targetFriend);
     }
-  }, [friends, friendsLoading, searchParams, currentChatUser, dispatch])
+  }
+}, [friends, friendsLoading, searchParams]);
 
   useEffect(() => {
     if (!currentChatUser || !user?.userId) return
@@ -125,23 +125,18 @@ const ChatPage = () => {
     }
   }, [currentChatUser])
 
-  const handleSelectFriend = async (friend) => {
-    if (!friend?._id) {
-      console.error("Invalid friend object:", friend)
-      return
-    }
-
-    dispatch(setCurrentChatUser(friend))
-
-    try {
-      await dispatch(fetchMessages(friend._id)).unwrap()
-      dispatch(clearUnread(friend._id))
-      router.push(`/chat?user=${friend._id}`, { scroll: false })
-    } catch (err) {
-      console.error("Failed to fetch messages:", err)
-      message.error("Could not load chat. Please try again.")
-    }
+ const handleSelectFriend = async (friend) => {
+  if (!friend?._id || currentChatUser?._id === friend._id) return;
+  dispatch(setCurrentChatUser(friend));
+  try {
+    await dispatch(fetchMessages(friend._id)).unwrap();
+    dispatch(clearUnread(friend._id));
+    router.push(`/chat?user=${friend._id}`, { scroll: false });
+  } catch (err) {
+    console.error("Failed to fetch messages:", err);
+    message.error("Could not load chat. Please try again.");
   }
+};
 
   const handleSendMessage = async () => {
     if (!newMessage.trim() || !currentChatUser) return
