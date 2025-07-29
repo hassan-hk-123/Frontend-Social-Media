@@ -30,37 +30,37 @@ const useChatSocket = () => {
       dispatch(setOnlineUsers(userIds || []))
     })
 
-    socket.on("message_sent", (data) => {
-      dispatch(
-        updateMessageStatus({
-          messageId: data.messageId,
-          status: "sent",
-          userId: data.userId,
-        }),
-      )
-    })
+socket.on("message_sent", (data) => {
+  if (data.messageId) {
+    dispatch(updateMessageStatus({
+      messageId: data.messageId,
+      status: "sent",
+      userId: data.userId,
+    }));
+  } else {
+    dispatch(addMessage(data)); // Full message object
+  }
+});
 
-    socket.on("receive_message", (message) => {
-      dispatch(addMessage(message))
-      const fromId = message.from._id
-      const currentChatId = currentChatUser?._id
-
-      // Only increment unread if message is not from current user and not in active chat
-      if (fromId !== user.userId) {
-        if (fromId !== currentChatId) {
-          dispatch(incrementUnread(fromId))
-          notify.info({
-            message: `New message from ${message.from.fullName || message.from.username}`,
-            description: message.content,
-            placement: "topRight",
-          })
-        } else {
-          // If in active chat, mark as read immediately
-          socket.emit("read_message", { messageId: message._id, userId: user.userId })
-          dispatch(clearUnread(fromId))
-        }
-      }
-    })
+  socket.on("message_sent", (message) => {
+  dispatch(addMessage(message)); // No increment for sender
+});
+socket.on("receive_message", (message) => {
+  if (message.from._id !== user.userId) {
+    dispatch(addMessage(message));
+    if (message.from._id !== currentChatUser?._id) {
+      dispatch(incrementUnread(message.from._id));
+      notify.info({
+        message: `New message from ${message.from.fullName || message.from.username}`,
+        description: message.content,
+        placement: "topRight",
+      });
+    } else {
+      socket.emit("read_message", { messageId: message._id, userId: user.userId });
+      dispatch(clearUnread(message.from._id));
+    }
+  }
+});
 
     socket.on("user_typing", (data) => {
       dispatch(setTyping({ userId: data.from, typing: data.typing }))
