@@ -196,7 +196,7 @@ const chatSlice = createSlice({
       const userId = action.payload;
       // Only increment if not currently chatting with this user
       if (state.currentChatUser?._id !== userId) {
-        state.unread[userId] = (state.unread[userId] || 0) + 1;
+        state.unread[userId] = (state.unread[userId] || 0) + 0;
       }
     },
     updateMessageStatus(state, action) {
