@@ -64,7 +64,7 @@ export default function VerificationPage() {
       <div className="form-section">
         <div className="form-content">
           <h1>Verification</h1>
-          <p className="subtitle">Verify your code.</p>
+          <p className="subtitle">Please enter the verification code sent to your email.</p>
 
           {statusMessage && <p style={{ color: statusMessage.includes('success') ? 'green' : 'red' }}>{statusMessage}</p>}
 
