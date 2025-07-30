@@ -50,20 +50,17 @@ export default function Navbar() {
   const navbarRef = useRef(null);
   const modalWrapperRef = useRef(null);
 
-  console.log('Navbar component mounted');
-  console.log('Current notifications:', notifications);
-  console.log('Unread notification count:', notifCount);
-
   useEffect(() => {
     if (!user?.userId) return;
 
-    console.log('Registering socket listeners for user:', user.userId);
+    dispatch(fetchFriends());
+    dispatch(fetchRequests());
+    dispatch(fetchUnreadCounts());
+    dispatch(fetchNotifications());
 
-    // Define notification handler
-    const handleNotification = (data) => {
+    socket.on("notification", (data) => {
       console.log('Notification received:', data);
       if (data) {
-        // Dispatch with deduplication handled in reducer
         dispatch(addNotification(data));
         if (data.type === 'friend_request') {
           dispatch(addIncomingRequest(data.request));
@@ -84,24 +81,14 @@ export default function Navbar() {
           description: message,
         });
       }
-    };
+    });
 
-    // Register socket listeners
-    socket.on("notification", handleNotification);
     socket.on('connect_error', (error) => {
       console.error('Socket connection error:', error.message);
     });
 
-    // Initial data fetches
-    dispatch(fetchFriends());
-    dispatch(fetchRequests());
-    dispatch(fetchUnreadCounts());
-    dispatch(fetchNotifications());
-
-    // Cleanup
     return () => {
-      console.log('Cleaning up socket listeners for user:', user.userId);
-      socket.off("notification", handleNotification);
+      socket.off("notification");
       socket.off('connect_error');
     };
   }, [dispatch, user?.userId]);
@@ -249,11 +236,11 @@ export default function Navbar() {
           </Link>
         </li>
         <li>
-          <Badge count={notifCount} size="small" offset={[4, -10]}>
-            <span className="notification-bell" onClick={handleNotifModalOpen}>
-              <BellOutlined style={{ fontSize: 22 }} />
-            </span>
-          </Badge>
+          <Badge count={notifCount}  size="small" offset={[4, -10]}>
+          <span className="notification-bell" onClick={handleNotifModalOpen}>
+            <BellOutlined style={{ fontSize: 22 }} />
+          </span>
+        </Badge>
         </li>
         <li style={{ position: 'relative' }}>
           <span onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
@@ -318,7 +305,7 @@ export default function Navbar() {
                   description={
                     item.type === 'post_like' || item.type === 'post_comment' ? (
                       <span>
-                        {item.message} <Link href={`/post/${item.to ? item.to.toString() : ''}`}> View Post </Link>
+                        {item.message} <Link href={`/profile/${item.to ? item.to.toString() : ''}`}> View Post </Link>
                       </span>
                     ) : (
                       item.message

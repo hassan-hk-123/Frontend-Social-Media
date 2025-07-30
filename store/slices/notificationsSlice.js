@@ -1,70 +1,69 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 
-export const fetchNotifications = createAsyncThunk(
-  'notifications/fetchNotifications',
-  async (_, { rejectWithValue }) => {
-    try {
-      const response = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, { credentials: 'include' });
-      if (!response.ok) throw new Error('Failed to fetch notifications');
-      return await response.json();
-    } catch (error) {
-      return rejectWithValue(error.message);
-    }
+// Fetch notifications from the server
+export const fetchNotifications = createAsyncThunk('notifications/fetchNotifications', async (_, thunkAPI) => {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications`, {
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to fetch notifications');
+    return await res.json();
+  } catch (err) {
+    return thunkAPI.rejectWithValue(err.message);
   }
-);
+});
+
+// Mark all notifications as read
+export const markNotificationsRead = createAsyncThunk('notifications/markNotificationsRead', async (_, thunkAPI) => {
+  try {
+    const res = await fetch(`${process.env.NEXT_PUBLIC_API_URL}/api/notifications/mark-all-read`, {
+      method: 'PUT',
+      credentials: 'include',
+    });
+    if (!res.ok) throw new Error('Failed to mark notifications as read');
+    return await res.json();
+  } catch (err) {
+    return thunkAPI.rejectWithValue(err.message);
+  }
+});
 
 const notificationsSlice = createSlice({
   name: 'notifications',
   initialState: {
     items: [],
-    status: 'idle',
+    loading: false,
     error: null,
   },
   reducers: {
-    addNotification(state, action) {
-      const notification = action.payload;
-      // Deduplicate by _id or unique fields
-      const exists = state.items.some(
-        (n) =>
-          n._id === notification._id ||
-          (n.type === notification.type &&
-           n.postId === notification.postId &&
-           n.from?._id === notification.from?._id &&
-           n.createdAt === notification.createdAt)
-      );
-      if (!exists) {
-        state.items.push({ ...notification, read: false });
-        console.log('Added notification:', notification);
-      } else {
-        console.log('Duplicate notification ignored:', notification);
-      }
+    addNotification: (state, action) => {
+      state.items.unshift({ ...action.payload, read: false, id: Date.now() });
     },
-    markNotificationsRead(state) {
-      state.items.forEach((n) => {
-        n.read = true;
-      });
+    clearNotifications: (state) => {
+      state.items = [];
     },
-    markAllRead(state) {
-      state.items.forEach((n) => {
-        n.read = true;
-      });
-    },
+    markAllRead: (state) => {
+      state.items.forEach(n => (n.read = true));
+    }
   },
-  extraReducers: (builder) => {
+  extraReducers: builder => {
     builder
       .addCase(fetchNotifications.pending, (state) => {
-        state.status = 'loading';
+        state.loading = true;
+        state.error = null;
       })
       .addCase(fetchNotifications.fulfilled, (state, action) => {
-        state.status = 'succeeded';
-        state.items = action.payload; // Replace, don’t append
+        state.loading = false;
+        state.items = action.payload.map(n => ({ ...n, id: n._id }));
       })
       .addCase(fetchNotifications.rejected, (state, action) => {
-        state.status = 'failed';
+        state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(markNotificationsRead.fulfilled, (state) => {
+        state.items.forEach(n => (n.read = true));
       });
-  },
+  }
 });
 
-export const { addNotification, markNotificationsRead, markAllRead } = notificationsSlice.actions;
+export const { addNotification, clearNotifications, markAllRead } = notificationsSlice.actions;
 export default notificationsSlice.reducer;
