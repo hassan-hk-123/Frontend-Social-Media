@@ -9,8 +9,9 @@
   font-family: var(--font-poppins, sans-serif);
   overflow: visible;
   overflow-y: auto;
-  max-height: 87.2vh;
-  min-height: 87.2vh;
+  height: 100%;
+  // max-height: 87.2vh;
+  // min-height: 87.2vh;
 }
 
 .right-sidebar h3 {

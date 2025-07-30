@@ -274,7 +274,7 @@ useEffect(() => {
                   >
                     <List.Item.Meta
                       avatar={
-                        <Badge count={getUnreadCount(friend._id)} size="small" offset={[-4, 32]}>
+                        <Badge count={getUnreadCount(friend._id)} size="small" offset={[-18, 12]}>
                           <Avatar src={friend.avatarImg} size={48} />
                         </Badge>
                       }

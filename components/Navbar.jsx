@@ -230,17 +230,17 @@ export default function Navbar() {
         </li>
         <li>
           <Link href="/chat" className={pathname === "/chat" ? "active" : ""}>
-            <Badge count={unreadCount} size="small" offset={[-4, 4]}>
+            <Badge count={unreadCount} size="small" offset={[4, -10]}>
               <MessageOutlined style={{ fontSize: 22 }} />
             </Badge>
           </Link>
         </li>
         <li>
-          <Badge count={notifCount} offset={[0, 10]}>
-            <span className="notification-bell" onClick={handleNotifModalOpen}>
-              <BellOutlined style={{ fontSize: 22 }} />
-            </span>
-          </Badge>
+          <Badge count={notifCount}  size="small" offset={[4, -10]}>
+          <span className="notification-bell" onClick={handleNotifModalOpen}>
+            <BellOutlined style={{ fontSize: 22 }} />
+          </span>
+        </Badge>
         </li>
         <li style={{ position: 'relative' }}>
           <span onClick={handleProfileClick} style={{ cursor: 'pointer' }}>

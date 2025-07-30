@@ -418,3 +418,28 @@ body.dark .search-result-item .user-avatar {
     font-size: 1.2rem;
   }
 }
+
+.ant-badge {
+  .ant-badge-count {
+    background: #ff4444; // Red badge color, adjust as needed
+    color: #fff;
+    border-radius: 50%; // Perfect circle
+    padding: 0 6px;
+    min-width: 16px;
+    height: 16px;
+    line-height: 16px;
+    font-size: 10px;
+    transform: translate(-50%, -50%); // Center align adjust
+    top: 50%;
+    right: 50%;
+    position: absolute;
+    box-shadow: 0 2px 4px rgba(0, 0, 0, 0.1);
+  }
+
+  .navbar-links li a,
+  .notification-bell {
+    position: relative;
+    overflow: visible; // Ensure badge is not clipped
+  }
+}
+
