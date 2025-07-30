@@ -19,7 +19,6 @@ import {
 } from '../store/slices/friendSlice';
 import { fetchUnreadCounts } from '../store/slices/chatSlice';
 import {
-  markAllRead,
   addNotification,
   fetchNotifications,
   markNotificationsRead
@@ -35,8 +34,8 @@ export default function Navbar() {
   const user = useSelector((state) => state.auth.user);
   const { unread } = useSelector((state) => state.chat);
   const unreadCount = Object.values(unread).reduce((sum, val) => sum + (val || 0), 0);
-  const notifCount = useSelector((state) => state.notifications.items.filter((n) => !n.read).length);
   const notifications = useSelector((state) => state.notifications.items);
+  const notifCount = notifications.filter((n) => !n.read).length;
   const [isNotifModalOpen, setNotifModalOpen] = useState(false);
   const [isCustomModalOpen, setCustomModalOpen] = useState(false);
   const { theme, toggleTheme } = useTheme();
@@ -95,7 +94,10 @@ export default function Navbar() {
 
   const handleNotifModalOpen = () => {
     setNotifModalOpen(true);
-    dispatch(markNotificationsRead());
+    const unreadNotificationIds = notifications.filter((n) => !n.read).map((n) => n._id);
+    if (unreadNotificationIds.length > 0) {
+      dispatch(markNotificationsRead(unreadNotificationIds));
+    }
   };
 
   const handleCustomModalOpen = () => {
@@ -180,6 +182,12 @@ export default function Navbar() {
     };
   }, [isCustomModalOpen, isProfileDropdownOpen]);
 
+  // Debugging logs for unread counts
+  console.log('Unread message counts:', unread);
+  console.log('Total unread message count:', unreadCount);
+  console.log('Unread notification count:', notifCount);
+  console.log('Notifications:', notifications);
+
   return (
     <nav className="navbar" ref={navbarRef}>
       <div className="navbar-left">
@@ -236,11 +244,11 @@ export default function Navbar() {
           </Link>
         </li>
         <li>
-          <Badge count={notifCount}  size="small" offset={[4, -10]}>
-          <span className="notification-bell" onClick={handleNotifModalOpen}>
-            <BellOutlined style={{ fontSize: 22 }} />
-          </span>
-        </Badge>
+          <Badge count={notifCount} size="small" offset={[4, -10]}>
+            <span className="notification-bell" onClick={handleNotifModalOpen}>
+              <BellOutlined style={{ fontSize: 22 }} />
+            </span>
+          </Badge>
         </li>
         <li style={{ position: 'relative' }}>
           <span onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
@@ -305,7 +313,7 @@ export default function Navbar() {
                   description={
                     item.type === 'post_like' || item.type === 'post_comment' ? (
                       <span>
-                        {item.message} <Link href={`/profile/${item.to ? item.to.toString() : ''}`}> View Post </Link>
+                        {item.message} <Link href={`/post/${item.postId}`}>View Post</Link>
                       </span>
                     ) : (
                       item.message
