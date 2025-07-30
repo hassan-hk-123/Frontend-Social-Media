@@ -50,48 +50,54 @@ export default function Navbar() {
   const navbarRef = useRef(null);
   const modalWrapperRef = useRef(null);
 
-  useEffect(() => {
-    if (!user?.userId) return;
+useEffect(() => {
+  if (!user?.userId) return;
 
-    dispatch(fetchFriends());
-    dispatch(fetchRequests());
-    dispatch(fetchUnreadCounts());
-    dispatch(fetchNotifications());
+  console.log('Registering socket listeners for user:', user.userId);
 
-    socket.on("notification", (data) => {
-      console.log('Notification received:', data);
-      if (data) {
-        dispatch(addNotification(data));
-        if (data.type === 'friend_request') {
-          dispatch(addIncomingRequest(data.request));
-        }
-        if (data.type === 'request_accepted' || data.type === 'request_rejected') {
-          dispatch(fetchSentRequests());
-        }
-        let message = data.message;
-        if (data.type === 'post_like' || data.type === 'post_comment') {
-          message = (
-            <span>
-              {data.message} <Link href={`/post/${data.postId}`}>View Post</Link>
-            </span>
-          );
-        }
-        notification.open({
-          message: "Notification",
-          description: message,
-        });
+  dispatch(fetchFriends());
+  dispatch(fetchRequests());
+  dispatch(fetchUnreadCounts());
+  dispatch(fetchNotifications());
+
+  const handleNotification = (data) => {
+    console.log('Notification received:', data);
+    if (data) {
+      // Check for duplicate notifications
+      dispatch(addNotification(data));
+      if (data.type === 'friend_request') {
+        dispatch(addIncomingRequest(data.request));
       }
-    });
+      if (data.type === 'request_accepted' || data.type === 'request_rejected') {
+        dispatch(fetchSentRequests());
+      }
+      let message = data.message;
+      if (data.type === 'post_like' || data.type === 'post_comment') {
+        message = (
+          <span>
+            {data.message} <Link href={`/post/${data.postId}`}>View Post</Link>
+          </span>
+        );
+      }
+      notification.open({
+        message: "Notification",
+        description: message,
+      });
+    }
+  };
 
-    socket.on('connect_error', (error) => {
-      console.error('Socket connection error:', error.message);
-    });
+  socket.on("notification", handleNotification);
 
-    return () => {
-      socket.off("notification");
-      socket.off('connect_error');
-    };
-  }, [dispatch, user?.userId]);
+  socket.on('connect_error', (error) => {
+    console.error('Socket connection error:', error.message);
+  });
+
+  return () => {
+    console.log('Cleaning up socket listeners for user:', user.userId);
+    socket.off("notification", handleNotification);
+    socket.off('connect_error');
+  };
+}, [dispatch, user?.userId]);
 
   const handleNotifModalOpen = () => {
     setNotifModalOpen(true);
