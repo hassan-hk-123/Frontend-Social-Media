@@ -50,54 +50,61 @@ export default function Navbar() {
   const navbarRef = useRef(null);
   const modalWrapperRef = useRef(null);
 
-useEffect(() => {
-  if (!user?.userId) return;
+  console.log('Navbar component mounted');
+  console.log('Current notifications:', notifications);
+  console.log('Unread notification count:', notifCount);
 
-  console.log('Registering socket listeners for user:', user.userId);
+  useEffect(() => {
+    if (!user?.userId) return;
 
-  dispatch(fetchFriends());
-  dispatch(fetchRequests());
-  dispatch(fetchUnreadCounts());
-  dispatch(fetchNotifications());
+    console.log('Registering socket listeners for user:', user.userId);
 
-  const handleNotification = (data) => {
-    console.log('Notification received:', data);
-    if (data) {
-      // Check for duplicate notifications
-      dispatch(addNotification(data));
-      if (data.type === 'friend_request') {
-        dispatch(addIncomingRequest(data.request));
+    // Define notification handler
+    const handleNotification = (data) => {
+      console.log('Notification received:', data);
+      if (data) {
+        // Dispatch with deduplication handled in reducer
+        dispatch(addNotification(data));
+        if (data.type === 'friend_request') {
+          dispatch(addIncomingRequest(data.request));
+        }
+        if (data.type === 'request_accepted' || data.type === 'request_rejected') {
+          dispatch(fetchSentRequests());
+        }
+        let message = data.message;
+        if (data.type === 'post_like' || data.type === 'post_comment') {
+          message = (
+            <span>
+              {data.message} <Link href={`/post/${data.postId}`}>View Post</Link>
+            </span>
+          );
+        }
+        notification.open({
+          message: "Notification",
+          description: message,
+        });
       }
-      if (data.type === 'request_accepted' || data.type === 'request_rejected') {
-        dispatch(fetchSentRequests());
-      }
-      let message = data.message;
-      if (data.type === 'post_like' || data.type === 'post_comment') {
-        message = (
-          <span>
-            {data.message} <Link href={`/post/${data.postId}`}>View Post</Link>
-          </span>
-        );
-      }
-      notification.open({
-        message: "Notification",
-        description: message,
-      });
-    }
-  };
+    };
 
-  socket.on("notification", handleNotification);
+    // Register socket listeners
+    socket.on("notification", handleNotification);
+    socket.on('connect_error', (error) => {
+      console.error('Socket connection error:', error.message);
+    });
 
-  socket.on('connect_error', (error) => {
-    console.error('Socket connection error:', error.message);
-  });
+    // Initial data fetches
+    dispatch(fetchFriends());
+    dispatch(fetchRequests());
+    dispatch(fetchUnreadCounts());
+    dispatch(fetchNotifications());
 
-  return () => {
-    console.log('Cleaning up socket listeners for user:', user.userId);
-    socket.off("notification", handleNotification);
-    socket.off('connect_error');
-  };
-}, [dispatch, user?.userId]);
+    // Cleanup
+    return () => {
+      console.log('Cleaning up socket listeners for user:', user.userId);
+      socket.off("notification", handleNotification);
+      socket.off('connect_error');
+    };
+  }, [dispatch, user?.userId]);
 
   const handleNotifModalOpen = () => {
     setNotifModalOpen(true);
@@ -242,11 +249,11 @@ useEffect(() => {
           </Link>
         </li>
         <li>
-          <Badge count={notifCount}  size="small" offset={[4, -10]}>
-          <span className="notification-bell" onClick={handleNotifModalOpen}>
-            <BellOutlined style={{ fontSize: 22 }} />
-          </span>
-        </Badge>
+          <Badge count={notifCount} size="small" offset={[4, -10]}>
+            <span className="notification-bell" onClick={handleNotifModalOpen}>
+              <BellOutlined style={{ fontSize: 22 }} />
+            </span>
+          </Badge>
         </li>
         <li style={{ position: 'relative' }}>
           <span onClick={handleProfileClick} style={{ cursor: 'pointer' }}>
@@ -311,7 +318,7 @@ useEffect(() => {
                   description={
                     item.type === 'post_like' || item.type === 'post_comment' ? (
                       <span>
-                        {item.message} <Link href={`/profile/${item.to ? item.to.toString() : ''}`}> View Post </Link>
+                        {item.message} <Link href={`/post/${item.to ? item.to.toString() : ''}`}> View Post </Link>
                       </span>
                     ) : (
                       item.message
