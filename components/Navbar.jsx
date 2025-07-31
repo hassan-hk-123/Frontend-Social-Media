@@ -313,7 +313,7 @@ export default function Navbar() {
                   description={
                     item.type === 'post_like' || item.type === 'post_comment' ? (
                       <span>
-                        {item.message} <Link href={`/post/${item.postId}`}>View Post</Link>
+                        {item.message} <Link href={`/profile/${item.from._id}`}>View Post</Link>
                       </span>
                     ) : (
                       item.message
