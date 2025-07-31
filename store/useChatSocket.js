@@ -2,7 +2,7 @@
 
 import { useEffect } from "react"
 import { useDispatch, useSelector } from "react-redux"
-import { debounce } from 'lodash' // Install lodash: npm install lodash
+import { debounce } from 'lodash'
 import socket from "./socket"
 import {
   addMessage,
@@ -27,17 +27,17 @@ const useChatSocket = () => {
   useEffect(() => {
     if (!user?.userId) return;
 
-    socket.connect();
+    if (!socket.connected) {
+      socket.connect();
+    }
     socket.emit("register", user.userId);
 
-    // Heartbeat to keep connection alive
     const heartbeatInterval = setInterval(() => {
       if (socket.connected) {
         socket.emit("heartbeat", { userId: user.userId });
       }
     }, 30000);
 
-    // Polling fallback if socket is disconnected
     const pollMessages = () => {
       if (!socket.connected && currentChatUser) {
         dispatch(fetchMessages(currentChatUser._id));
@@ -47,7 +47,6 @@ const useChatSocket = () => {
 
     socket.on("connect", () => {
       console.log("Socket connected:", socket.id);
-      // notify.success({ message: "Connected to chat server" });
       debouncedFetchUnreadCounts();
       if (currentChatUser) {
         dispatch(fetchMessages(currentChatUser._id));
@@ -78,25 +77,27 @@ const useChatSocket = () => {
       );
     });
 
-    socket.on("receive_message", (message) => {
-      dispatch(addMessage(message));
-      const fromId = message.from._id;
-      const currentChatId = currentChatUser?._id;
+ socket.on("receive_message", (message) => {
+  dispatch(addMessage(message));
+  const fromId = message.from._id;
+  const currentChatId = currentChatUser?._id;
 
-      if (fromId !== user.userId) {
-        if (fromId !== currentChatId) {
-          dispatch(incrementUnread(fromId));
-          notify.info({
-            message: `New message from ${message.from.fullName || message.from.username}`,
-            description: message.content,
-            placement: "topRight",
-          });
-        } else {
-          socket.emit("read_message", { messageId: message._id, userId: user.userId });
-          dispatch(clearUnread(fromId));
-        }
-      }
+  if (fromId !== user.userId && currentChatId && fromId === currentChatId) {
+    socket.emit("read_message", {
+      messageId: message._id,
+      readerId: user.userId,
+      senderId: fromId
     });
+    dispatch(clearUnread(fromId));
+  } else if (fromId !== user.userId) {
+    dispatch(incrementUnread(fromId));
+    notify.info({
+      message: `New message from ${message.from.fullName || message.from.username}`,
+      description: message.content,
+      placement: "topRight",
+    });
+  }
+});
 
     socket.on("user_typing", (data) => {
       dispatch(setTyping({ userId: data.from, typing: data.typing }));
@@ -112,16 +113,19 @@ const useChatSocket = () => {
       );
     });
 
-    socket.on("message_read", (data) => {
-      dispatch(
-        updateMessageStatus({
-          messageId: data.messageId,
-          status: "read",
-          userId: data.userId,
-        })
-      );
-      dispatch(clearUnread(data.userId));
-    });
+    // `message_read` event handler ko update kiya gaya
+socket.on("message_read", (data) => {
+  dispatch(
+    updateMessageStatus({
+      messageId: data.messageId,
+      status: "read",
+      userId: data.chatPartnerId,
+    })
+  );
+  if (data.readerId === user.userId) {
+    dispatch(clearUnread(data.senderId));
+  }
+});
 
     socket.on("notification", (notification) => {
       if (notification.to === user.userId) {
@@ -147,7 +151,9 @@ const useChatSocket = () => {
       socket.off("connect");
       socket.off("connect_error");
       socket.off("reconnect");
-      socket.disconnect();
+      if (socket.connected) {
+        socket.disconnect();
+      }
     };
   }, [user, dispatch, currentChatUser]);
 
