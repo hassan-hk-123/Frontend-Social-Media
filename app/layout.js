@@ -5,7 +5,6 @@ import 'antd/dist/reset.css';
 import { ConfigProvider } from "antd";
 import AppNotifications from '../components/AppNotifications';
 import ClientWrapper from "../components/ClientWrapper";
-import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -28,18 +27,21 @@ export default function RootLayout({ children }) {
           crossOrigin="anonymous"
           src="https://connect.facebook.net/en_US/sdk.js"
         />
+        <script
+          async
+          defer
+          src="https://accounts.google.com/gsi/client"
+        />
       </head>
       <body>
-        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
-          <ThemeProvider>
-            <Providers>
-              <ClientWrapper>
-                <AppNotifications />
-                {children}
-              </ClientWrapper>
-            </Providers>
-          </ThemeProvider>
-        </GoogleOAuthProvider>
+        <ThemeProvider>
+          <Providers>
+            <ClientWrapper>
+              <AppNotifications />
+              {children}
+            </ClientWrapper>
+          </Providers>
+        </ThemeProvider>
       </body>
     </html>
   );
