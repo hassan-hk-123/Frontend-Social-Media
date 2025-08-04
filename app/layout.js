@@ -1,13 +1,11 @@
-// ❌ Remove this line:
-// "use client"; ← hata do
-
 import { Poppins } from "next/font/google";
 import "./globals.css";
 import { Providers, ThemeProvider } from './providers';
 import 'antd/dist/reset.css';
 import { ConfigProvider } from "antd";
 import AppNotifications from '../components/AppNotifications';
-import ClientWrapper from "../components/ClientWrapper"; // ✅ new wrapper
+import ClientWrapper from "../components/ClientWrapper";
+import { GoogleOAuthProvider } from '@react-oauth/google';
 
 const poppins = Poppins({
   subsets: ["latin"],
@@ -23,15 +21,25 @@ export const metadata = {
 export default function RootLayout({ children }) {
   return (
     <html lang="en">
+      <head>
+        <script
+          async
+          defer
+          crossOrigin="anonymous"
+          src="https://connect.facebook.net/en_US/sdk.js"
+        />
+      </head>
       <body>
-        <ThemeProvider>
-          <Providers>
-            <ClientWrapper> {/* ✅ Hook will run here */}
-              <AppNotifications />
-              {children}
-            </ClientWrapper>
-          </Providers>
-        </ThemeProvider>
+        <GoogleOAuthProvider clientId={process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID}>
+          <ThemeProvider>
+            <Providers>
+              <ClientWrapper>
+                <AppNotifications />
+                {children}
+              </ClientWrapper>
+            </Providers>
+          </ThemeProvider>
+        </GoogleOAuthProvider>
       </body>
     </html>
   );

@@ -1,13 +1,10 @@
 import { createSlice, createAsyncThunk } from '@reduxjs/toolkit';
 import axios from 'axios';
-import { useEffect } from 'react';
-import { useDispatch, useSelector } from 'react-redux';
 
 const API_URL = process.env.NEXT_PUBLIC_API_URL;
-console.log('API_URL:', API_URL);
 
 // Async thunks
-export const signup = createAsyncThunk(
+const signup = createAsyncThunk(
   'auth/signup',
   async (userData, { rejectWithValue }) => {
     try {
@@ -19,18 +16,61 @@ export const signup = createAsyncThunk(
   }
 );
 
-export const signin = createAsyncThunk(
+const googleLogin = createAsyncThunk(
+  'auth/googleLogin',
+  async (idToken, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/google-login`, { idToken }, { withCredentials: true });
+      const { userId, userName, role, user } = response.data;
+      
+      // Return user data with all necessary fields
+      return {
+        userId: user._id,
+        userName: user.fullName,
+        username: user.username,
+        email: user.email,
+        avatarImg: user.avatarImg,
+        provider: user.provider,
+        isVerified: user.isVerified,
+        role: 'user'
+      };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Google login failed');
+    }
+  }
+);
+
+const facebookLogin = createAsyncThunk(
+  'auth/facebookLogin',
+  async (accessToken, { rejectWithValue }) => {
+    try {
+      const response = await axios.post(`${API_URL}/api/auth/facebook-login`, { accessToken }, { withCredentials: true });
+      const { userId, userName, role, user } = response.data;
+      
+      // Return user data with all necessary fields
+      return {
+        userId: user._id,
+        userName: user.fullName,
+        username: user.username,
+        email: user.email,
+        avatarImg: user.avatarImg,
+        provider: user.provider,
+        isVerified: user.isVerified,
+        role: 'user'
+      };
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Facebook login failed');
+    }
+  }
+);
+
+const signin = createAsyncThunk(
   'auth/signin',
-  async (credentials, { rejectWithValue, dispatch }) => {
+  async (credentials, { rejectWithValue }) => {
     try {
       const response = await axios.post(`${API_URL}/api/auth/signin`, credentials, { withCredentials: true });
-      const { token, userId, userName } = response.data;
-      let role = 'user';
-      try {
-        const payload = JSON.parse(atob(token.split('.')[1]));
-        role = payload.role || 'user';
-      } catch (e) {}
-      // Fetch full user profile after login
+      const { userId, userName, role } = response.data;
+      const token = response.config.headers['Authorization']?.split(' ')[1] || response.data.token;
       const profileRes = await axios.get(`${API_URL}/api/auth/profile/${userId}`, { withCredentials: true });
       const userProfile = profileRes.data;
       return { ...userProfile, token, userId, role };
@@ -40,7 +80,7 @@ export const signin = createAsyncThunk(
   }
 );
 
-export const verifyEmail = createAsyncThunk(
+const verifyEmail = createAsyncThunk(
   'auth/verifyEmail',
   async (token, { rejectWithValue }) => {
     try {
@@ -52,7 +92,7 @@ export const verifyEmail = createAsyncThunk(
   }
 );
 
-export const forgotPassword = createAsyncThunk(
+const forgotPassword = createAsyncThunk(
   'auth/forgotPassword',
   async (email, { rejectWithValue }) => {
     try {
@@ -64,7 +104,7 @@ export const forgotPassword = createAsyncThunk(
   }
 );
 
-export const resetPassword = createAsyncThunk(
+const resetPassword = createAsyncThunk(
   'auth/resetPassword',
   async ({ token, password }, { rejectWithValue }) => {
     try {
@@ -76,7 +116,7 @@ export const resetPassword = createAsyncThunk(
   }
 );
 
-export const getProfile = createAsyncThunk(
+const getProfile = createAsyncThunk(
   'auth/getProfile',
   async ({ id }, { rejectWithValue }) => {
     try {
@@ -90,10 +130,9 @@ export const getProfile = createAsyncThunk(
   }
 );
 
-// Update profile thunk
-export const updateProfile = createAsyncThunk(
+const updateProfile = createAsyncThunk(
   'auth/updateProfile',
-  async (profileData, thunkAPI) => {
+  async (profileData, { rejectWithValue }) => {
     try {
       const res = await axios.put(
         `${API_URL}/api/auth/profile/${profileData.id}`,
@@ -118,8 +157,7 @@ export const updateProfile = createAsyncThunk(
   }
 );
 
-// Change password thunk
-export const changePassword = createAsyncThunk(
+const changePassword = createAsyncThunk(
   'auth/changePassword',
   async ({ id, currentPassword, newPassword, token }, { rejectWithValue }) => {
     try {
@@ -135,7 +173,7 @@ export const changePassword = createAsyncThunk(
   }
 );
 
-export const uploadAvatar = createAsyncThunk(
+const uploadAvatar = createAsyncThunk(
   'auth/uploadAvatar',
   async (file, { rejectWithValue }) => {
     try {
@@ -145,14 +183,14 @@ export const uploadAvatar = createAsyncThunk(
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      return res.data.url; // Cloudinary URL
+      return res.data.url;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Upload failed');
     }
   }
 );
 
-export const uploadCover = createAsyncThunk(
+const uploadCover = createAsyncThunk(
   'auth/uploadCover',
   async (file, { rejectWithValue }) => {
     try {
@@ -162,38 +200,45 @@ export const uploadCover = createAsyncThunk(
         withCredentials: true,
         headers: { 'Content-Type': 'multipart/form-data' }
       });
-      return res.data.url; // Cloudinary URL
+      return res.data.url;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Upload failed');
     }
   }
 );
-export const logoutUser = createAsyncThunk(
+
+const checkUsername = createAsyncThunk(
+  'auth/checkUsername',
+  async (username, { rejectWithValue }) => {
+    try {
+      const response = await axios.get(`${API_URL}/api/auth/check-username/${username}`, {
+        withCredentials: true
+      });
+      return response.data;
+    } catch (error) {
+      return rejectWithValue(error.response?.data?.message || 'Username check failed');
+    }
+  }
+);
+
+const logoutUser = createAsyncThunk(
   'auth/logoutUser',
   async (_, { rejectWithValue }) => {
     try {
-      await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
-      localStorage.removeItem('user');
-      if (typeof window !== 'undefined') {
-        document.cookie.split(";").forEach(c => {
-          document.cookie = c.trim().split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
-        });
-      }
-      return true;
+      const response = await axios.post(`${API_URL}/api/auth/logout`, {}, { withCredentials: true });
+      return response.data;
     } catch (error) {
       return rejectWithValue(error.response?.data?.message || 'Logout failed');
     }
   }
 );
 
-
-
 const initialState = {
   token: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user'))?.token : null,
   isAuthenticated: !!(typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user'))?.token : null),
   user: typeof window !== 'undefined' ? JSON.parse(localStorage.getItem('user')) : null,
-  viewedProfile: null, // <-- ADD
-  viewedProfileLoading: false, // <-- ADD
+  viewedProfile: null,
+  viewedProfileLoading: false,
   loading: false,
   error: null,
   message: null,
@@ -213,7 +258,6 @@ const authSlice = createSlice({
       state.isAuthenticated = false;
       state.user = null;
       localStorage.removeItem('user');
-      
     },
     clearError: (state) => {
       state.error = null;
@@ -233,6 +277,34 @@ const authSlice = createSlice({
         state.message = action.payload.message;
       })
       .addCase(signup.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(googleLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(googleLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        localStorage.setItem('user', JSON.stringify(action.payload));
+      })
+      .addCase(googleLogin.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
+      })
+      .addCase(facebookLogin.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(facebookLogin.fulfilled, (state, action) => {
+        state.loading = false;
+        state.user = action.payload;
+        state.isAuthenticated = true;
+        localStorage.setItem('user', JSON.stringify(action.payload));
+      })
+      .addCase(facebookLogin.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
       })
@@ -287,35 +359,33 @@ const authSlice = createSlice({
         state.error = action.payload;
       })
       .addCase(getProfile.pending, (state) => {
-        state.viewedProfileLoading = true; // <-- CHANGE
+        state.viewedProfileLoading = true;
         state.error = null;
       })
       .addCase(getProfile.fulfilled, (state, action) => {
-        state.viewedProfileLoading = false; // <-- CHANGE
-        // If the fetched profile is the logged-in user's, update the main user object too
+        state.viewedProfileLoading = false;
         if (state.user?.userId === action.payload._id) {
-            state.user = { ...action.payload, token: state.user.token, userId: state.user.userId };
-            localStorage.setItem('user', JSON.stringify(state.user));
+          state.user = { ...action.payload, token: state.user.token, userId: state.user.userId };
+          localStorage.setItem('user', JSON.stringify(state.user));
         }
-        state.viewedProfile = action.payload; // <-- SET viewedProfile
+        state.viewedProfile = action.payload;
       })
       .addCase(getProfile.rejected, (state, action) => {
-        state.viewedProfileLoading = false; // <-- CHANGE
+        state.viewedProfileLoading = false;
         state.error = action.payload;
-        state.viewedProfile = null; // <-- CLEAR viewedProfile
+        state.viewedProfile = null;
       })
       .addCase(updateProfile.pending, (state) => {
         state.loading = true;
         state.error = null;
       })
       .addCase(updateProfile.fulfilled, (state, action) => {
-        // Update both user and viewedProfile if they are the same person
         if (state.user?.userId === action.payload.user._id) {
-            state.user = { ...action.payload.user, token: state.user.token, userId: state.user.userId };
-             localStorage.setItem('user', JSON.stringify(state.user));
+          state.user = { ...action.payload.user, token: state.user.token, userId: state.user.userId };
+          localStorage.setItem('user', JSON.stringify(state.user));
         }
         if (state.viewedProfile?._id === action.payload.user._id) {
-            state.viewedProfile = action.payload.user;
+          state.viewedProfile = action.payload.user;
         }
         state.loading = false;
       })
@@ -334,9 +404,31 @@ const authSlice = createSlice({
       .addCase(changePassword.rejected, (state, action) => {
         state.loading = false;
         state.error = action.payload;
+      })
+      .addCase(logoutUser.pending, (state) => {
+        state.loading = true;
+        state.error = null;
+      })
+      .addCase(logoutUser.fulfilled, (state) => {
+        state.loading = false;
+        state.user = null;
+        state.isAuthenticated = false;
+        state.viewedProfile = null;
+        localStorage.removeItem('user');
+        // Clear cookies
+        if (typeof window !== 'undefined') {
+          document.cookie.split(";").forEach(c => {
+            document.cookie = c.trim().split("=")[0] + "=;expires=Thu, 01 Jan 1970 00:00:00 GMT;path=/";
+          });
+        }
+      })
+      .addCase(logoutUser.rejected, (state, action) => {
+        state.loading = false;
+        state.error = action.payload;
       });
   },
 });
 
 export const { setAuth, logout, clearError, clearMessage } = authSlice.actions;
+export { googleLogin, facebookLogin, signin, signup, verifyEmail, forgotPassword, resetPassword, getProfile, updateProfile, changePassword, uploadAvatar, uploadCover, checkUsername, logoutUser };
 export default authSlice.reducer;

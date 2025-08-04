@@ -75,6 +75,19 @@ export default function RightSidebar() {
     }
   };
 
+  const handleCancelRequest = async (requestId) => {
+    setLoadingStates((prev) => ({ ...prev, [requestId]: true }));
+    try {
+      await dispatch(cancelFriendRequest(requestId)).unwrap();
+      messageApi.success("Friend request cancelled!", 2.5);
+      dispatch(fetchSentRequests());
+    } catch (err) {
+      messageApi.error(err?.message || "Failed to cancel request", 2.5);
+    } finally {
+      setLoadingStates((prev) => ({ ...prev, [requestId]: false }));
+    }
+  };
+
   // Create a set of friend IDs and request IDs for quick lookup (as strings)
   const friendIds = new Set(friends.map((f) => String(f._id)));
   const sentRequestIds = new Set(sentRequests.map((req) => String(req.to._id)));
@@ -92,7 +105,7 @@ export default function RightSidebar() {
     <>
       {contextHolder}
       <div className="right-sidebar">
-        <h3 className="section-title">Friend Requests</h3>
+        <h3 className="section-title">Friend Requests ({requests.length})</h3>
         {generalLoading && requests.length === 0 && <p>Loading requests...</p>}
         {!generalLoading && requests.length === 0 && (
           <p className="no-data-msg">No new requests</p>
@@ -127,6 +140,44 @@ export default function RightSidebar() {
                   onClick={() => handleRespondRequest(req._id, "reject")}
                 >
                   Delete
+                </button>
+              </div>
+            </div>
+          </div>
+        ))}
+
+        {/* Pending Sent Requests Section */}
+        <h3 className="section-title">Pending Requests ({sentRequests.length})</h3>
+        {generalLoading && sentRequests.length === 0 && <p>Loading pending requests...</p>}
+        {!generalLoading && sentRequests.length === 0 && (
+          <p className="no-data-msg">No pending requests</p>
+        )}
+        {sentRequests.map((req) => (
+          <div key={req._id} className="friend-request pending-request">
+            <Link href={`/profile/${req.to?._id}`} style={{ textDecoration: "none", color: "inherit" }}>
+              <Image
+                src={req.to?.avatarImg || "/login.jpeg"}
+                alt={req.to?.fullName || "User"}
+                width={40}
+                height={40}
+                className="avatar"
+              />
+            </Link>
+            <div className="friend-info">
+              <Link
+                href={`/profile/${req.to?._id}`}
+                style={{ textDecoration: "none", color: "inherit" }}
+              >
+                <span className="friend-name">{req.to?.username || "User"}</span>
+              </Link>
+              <div className="friend-actions">
+                <button
+                  className="cancel"
+                  onClick={() => handleCancelRequest(req._id)}
+                  disabled={loadingStates[req._id]}
+                  title="Cancel this friend request"
+                >
+                  {loadingStates[req._id] ? "Cancelling..." : "Cancel"}
                 </button>
               </div>
             </div>

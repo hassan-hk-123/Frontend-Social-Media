@@ -7,7 +7,11 @@ import { Eye, EyeOff } from "lucide-react"
 import { useRouter } from "next/navigation"
 import "./page.scss"
 import { useSelector, useDispatch } from 'react-redux'
-import { signin, clearError, clearMessage } from '../../store/slices/authSlice'
+import { signin, googleLogin, facebookLogin, clearError, clearMessage } from '../../store/slices/authSlice'
+import GoogleLogin from '../../components/GoogleLogin'
+import FacebookLogin from '../../components/FacebookLogin'
+import FacebookDebug from '../../components/FacebookDebug'
+import SocialLoginTest from '../../components/SocialLoginTest'
 
 export default function LoginPage() {
   const dispatch = useDispatch()
@@ -17,16 +21,15 @@ export default function LoginPage() {
   const [form] = Form.useForm()
   const [showPassword, setShowPassword] = useState(false)
 
-  // AntD message context for reliable toasts
   const [messageApi, contextHolder] = antdMessage.useMessage();
 
-  // Show error/success messages
   useEffect(() => {
     if (authMessage) {
       messageApi.success(authMessage)
       dispatch(clearMessage())
+      router.push('/')
     }
-  }, [authMessage, dispatch, messageApi])
+  }, [authMessage, dispatch, messageApi, router])
 
   useEffect(() => {
     if (error) {
@@ -44,18 +47,37 @@ export default function LoginPage() {
       } else {
         router.push('/');
       }
-    } catch (err) {
-      // Error is handled by Redux and shown above
-    }
+    } catch (err) {}
   }
 
   const onFinishFailed = (errorInfo) => {
     console.log("Failed:", errorInfo)
   }
 
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      await dispatch(googleLogin(credentialResponse.credential)).unwrap();
+      router.push('/');
+    } catch (err) {
+      messageApi.error('Google login failed');
+    }
+  }
+
+  const handleFacebookLogin = async (userData) => {
+    try {
+      // Facebook login is already handled in the FacebookLogin component
+      // This function just handles the success callback
+      router.push('/');
+    } catch (err) {
+      messageApi.error('Facebook login failed');
+    }
+  }
+
   return (
     <div className="signin-container">
       {contextHolder}
+      {/* <FacebookDebug /> */}
+      {/* <SocialLoginTest /> */}
       <div className="image-section">
         <Image
           src="/login.jpeg"
@@ -100,21 +122,47 @@ export default function LoginPage() {
             </Form.Item>
 
             {error && (
-            <div style={{ color: 'red', marginBottom: 16,  }}>
-              {error}
-            </div>
-          )}
+              <div style={{ color: 'red', marginBottom: 16 }}>
+                {error}
+              </div>
+            )}
           
             <Form.Item>
-              <Button type="primary" 
-              htmlType="submit" 
-              className="login-button"
-              loading={loading}
-              block>
+              <Button 
+                type="primary" 
+                htmlType="submit" 
+                className="login-button"
+                loading={loading}
+                block
+              >
                 Login
               </Button>
             </Form.Item>
           </Form>
+
+          {/* OR Separator */}
+          <div className="or-separator">
+            <div className="or-line"></div>
+            <span className="or-text">OR</span>
+            <div className="or-line"></div>
+          </div>
+
+          {/* Social Login Buttons */}
+          <div className="social-login-container">
+            <div className="social-button-wrapper">
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => messageApi.error('Google login failed')}
+              />
+            </div>
+            
+            <div className="social-button-wrapper">
+              <FacebookLogin
+                onSuccess={handleFacebookLogin}
+                onError={(error) => messageApi.error(error)}
+              />
+            </div>
+          </div>
 
           <div className="signup-link">
             Don't have an account? <Link href="/signup">Sign up</Link>

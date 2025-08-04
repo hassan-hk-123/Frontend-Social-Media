@@ -304,7 +304,7 @@ export default function Navbar() {
           </div>
         ) : (
           <List
-            dataSource={notifications}
+            dataSource={notifications.filter(item => item.from)} // Filter out notifications without 'from' user
             renderItem={(item) => (
               <List.Item style={{ background: item.read ? "#f7f7f7" : "#e6f7ff", borderRadius: 6, marginBottom: 4 }}>
                 <List.Item.Meta
@@ -313,7 +313,7 @@ export default function Navbar() {
                   description={
                     item.type === 'post_like' || item.type === 'post_comment' ? (
                       <span>
-                        {item.message} <Link href={`/profile/${item.from._id}`}>View Post</Link>
+                        {item.message} {item.from && item.from._id ? <Link href={`/profile/${item.from._id}`}>View Post</Link> : null}
                       </span>
                     ) : (
                       item.message

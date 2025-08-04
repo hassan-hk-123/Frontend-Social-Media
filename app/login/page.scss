@@ -186,6 +186,62 @@ input[type="password"] {
   text-decoration: underline;
 }
 
+/* OR Separator */
+.or-separator {
+  display: flex;
+  align-items: center;
+  margin: 24px 0;
+  width: 100%;
+}
+
+.or-line {
+  flex: 1;
+  height: 1px;
+  background-color: #e4e6eb;
+}
+
+.or-text {
+  padding: 0 16px;
+  color: #65676b;
+  font-size: 14px;
+  font-weight: 500;
+  background-color: #fff;
+}
+
+/* Social Login Container */
+.social-login-container {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  width: 100%;
+  margin-bottom: 24px;
+}
+
+.social-button-wrapper {
+  width: 100%;
+  
+  /* Ensure consistent button styling */
+  button {
+    width: 100% !important;
+    height: 44px !important;
+    border-radius: 4px !important;
+    font-weight: 500 !important;
+    font-size: 16px !important;
+    font-family: 'Poppins', sans-serif !important;
+    display: flex !important;
+    align-items: center !important;
+    justify-content: center !important;
+    gap: 8px !important;
+    transition: all 0.2s ease !important;
+    border: 1.5px solid !important;
+    
+    &:hover {
+      transform: translateY(-1px) !important;
+      box-shadow: 0 4px 12px rgba(0, 0, 0, 0.15) !important;
+    }
+  }
+}
+
 /* Media query for larger screens */
 @media (min-width: 768px) {
   .image-section {

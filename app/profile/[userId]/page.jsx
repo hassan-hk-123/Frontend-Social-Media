@@ -7,7 +7,7 @@ import Navbar from '../../../components/Navbar';
 import Sidenav from '../../../components/Sidenav';
 import '../page.scss';
 import { useSelector, useDispatch } from 'react-redux';
-import { getProfile, updateProfile, uploadAvatar, uploadCover } from '../../../store/slices/authSlice';
+import { getProfile, updateProfile, uploadAvatar, uploadCover, checkUsername } from '../../../store/slices/authSlice';
 import { FaPencilAlt, FaBriefcase, FaGraduationCap, FaHome, FaMapMarkerAlt, FaHeart, FaRegCalendarAlt, FaRegComment } from 'react-icons/fa';
 import { Select, DatePicker, Drawer, Button, message } from 'antd';
 import dayjs from 'dayjs';
@@ -29,6 +29,10 @@ const DynamicProfilePage = () => {
   const loggedInUser = useSelector(state => state.auth.user);
   const profile = useSelector(state => state.auth.viewedProfile);
   const loading = useSelector(state => state.auth.viewedProfileLoading);
+  const profileError = useSelector(state => state.auth.error);
+  
+  // Debug logging
+  console.log('Profile state:', { profile, loading, profileError, viewedUserId });
   const friends = useSelector(state => state.friends.friends);
   const sentRequests = useSelector(state => state.friends.sentRequests);
   const incomingRequests = useSelector(state => state.friends.requests);
@@ -39,6 +43,9 @@ const DynamicProfilePage = () => {
 
   const [showEdit, setShowEdit] = useState(false);
   const [editData, setEditData] = useState({ fullName: '', username: '', bio: '', avatarImg: '', coverImg: '', age: '', address: '', country: '', gender: '', study: '', dob: '' });
+  const [usernameError, setUsernameError] = useState('');
+  const [isCheckingUsername, setIsCheckingUsername] = useState(false);
+  const [imagePreviews, setImagePreviews] = useState({});
   const isOwnProfile = loggedInUser?.userId === viewedUserId;
   const [modalType, setModalType] = useState(null);
   const [searchTerm, setSearchTerm] = useState('');
@@ -96,13 +103,25 @@ const DynamicProfilePage = () => {
 
   useEffect(() => {
     if (viewedUserId) {
+      console.log('Loading profile for user:', viewedUserId);
       dispatch(getProfile({ id: viewedUserId }));
       dispatch(getUserPosts(viewedUserId));
     }
   }, [viewedUserId, dispatch]);
 
+  // Retry mechanism for profile loading
+  const handleRetry = () => {
+    if (viewedUserId) {
+      dispatch(getProfile({ id: viewedUserId }));
+      dispatch(getUserPosts(viewedUserId));
+    }
+  };
+
   useEffect(() => {
     if (profile) {
+      // Calculate default date (15 years ago, 2010)
+      const defaultDate = dayjs('2010-01-01');
+      
       setEditData({
         fullName: profile.fullName || '',
         username: profile.username || '',
@@ -114,25 +133,68 @@ const DynamicProfilePage = () => {
         country: profile.country || '',
         gender: profile.gender || '',
         study: profile.study || '',
-        dob: profile.dob ? dayjs(profile.dob) : null,
+        dob: profile.dob ? dayjs(profile.dob) : defaultDate,
       });
     }
   }, [profile]);
 
+  // Cleanup image previews when component unmounts or drawer closes
+  useEffect(() => {
+    return () => {
+      Object.values(imagePreviews).forEach(url => {
+        if (url) URL.revokeObjectURL(url);
+      });
+    };
+  }, [imagePreviews]);
+
   const handleEditChange = (e) => {
     if (e && e.target) {
       const { name, value, files, type } = e.target;
-      if (files) {
+      if (files && files[0]) {
+        const file = files[0];
+        const previewUrl = URL.createObjectURL(file);
+        
+        // Clean up previous preview URL to prevent memory leaks
+        if (imagePreviews[name]) {
+          URL.revokeObjectURL(imagePreviews[name]);
+        }
+        
+        setImagePreviews(prev => ({
+          ...prev,
+          [name]: previewUrl
+        }));
+        
         setEditData(prev => ({
           ...prev,
-          [name]: files[0],
-          [`${name}Preview`]: URL.createObjectURL(files[0])
+          [name]: file,
+          [`${name}Preview`]: previewUrl
         }));
       } else {
         setEditData(prev => ({
           ...prev,
           [name]: type === 'number' ? Number(value) : value
         }));
+        
+        // Check username availability when username changes
+        if (name === 'username' && value !== profile?.username) {
+          setUsernameError('');
+          if (value.length >= 3) {
+            setIsCheckingUsername(true);
+            dispatch(checkUsername(value))
+              .unwrap()
+              .then(result => {
+                if (!result.available) {
+                  setUsernameError('Username is already taken');
+                }
+              })
+              .catch(() => {
+                setUsernameError('Error checking username');
+              })
+              .finally(() => {
+                setIsCheckingUsername(false);
+              });
+          }
+        }
       }
     }
   };
@@ -193,8 +255,8 @@ const DynamicProfilePage = () => {
 
   const modalList = friendList;
   const filteredList = modalList.filter(u =>
-    u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
-    u.username.toLowerCase().includes(searchTerm.toLowerCase())
+    u && u.fullName && u.fullName.toLowerCase().includes(searchTerm.toLowerCase()) ||
+    u && u.username && u.username.toLowerCase().includes(searchTerm.toLowerCase())
   );
 
   const handleLike = (postId) => {
@@ -368,8 +430,43 @@ const DynamicProfilePage = () => {
         </div>
         <div style={{ flex: 1, display: 'flex', justifyContent: 'center', alignItems: 'flex-start', padding: '32px 0 0 0', minHeight: '100vh' }}>
           <div className="profilePage">
-            {loading || !profile ? (
-              <div className="profileLoading">Loading...</div>
+            {loading ? (
+              <div className="profileLoading">
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ fontSize: '18px', color: '#666', marginBottom: '10px' }}>Loading profile...</div>
+                  <div style={{ fontSize: '14px', color: '#999' }}>Please wait while we fetch the user's information</div>
+                </div>
+              </div>
+            ) : !profile ? (
+              <div className="profileLoading">
+                <div style={{ textAlign: 'center', padding: '40px' }}>
+                  <div style={{ fontSize: '18px', color: '#666', marginBottom: '10px' }}>
+                    {profileError ? 'Error loading profile' : 'Profile not found'}
+                  </div>
+                  <div style={{ fontSize: '14px', color: '#999', marginBottom: '20px' }}>
+                    {profileError || 'The user you\'re looking for doesn\'t exist or has been removed'}
+                  </div>
+                  {profileError && (
+                    <button 
+                      onClick={() => {
+                        dispatch(getProfile({ id: viewedUserId }));
+                        dispatch(getUserPosts(viewedUserId));
+                      }}
+                      style={{
+                        background: 'var(--primary)',
+                        color: 'white',
+                        border: 'none',
+                        padding: '10px 20px',
+                        borderRadius: '6px',
+                        cursor: 'pointer',
+                        fontSize: '14px'
+                      }}
+                    >
+                      Try Again
+                    </button>
+                  )}
+                </div>
+              </div>
             ) : (
               <>
                 <div className="profileCoverWrapper">
@@ -438,13 +535,14 @@ const DynamicProfilePage = () => {
                 <div className="profileMainTwoCol">
                   <div className="profileLeftCol">
                     <div className="profileInfoCard theme">
-                      <div className="profileInfoTitle">Intro</div>
+                        <div className="profileInfoTitle">Intro:</div>
                       <div className="profileInfoBio">{profile.bio || 'No bio'}</div>
                       <hr />
-                      <div className="profileInfoItem"> <FaMapMarkerAlt style={{color: '#040d5b'}} />: {profile.country || 'N/A'}</div>
-                      <div className="profileInfoItem"><FaHome style={{color: '#040d5b'}} />: {profile.address || 'N/A'}</div>
-                      <div className="profileInfoItem"><FaGraduationCap style={{color: '#040d5b'}} />: {profile.study || 'N/A'}</div>
-                      <div className="profileInfoItem"><FaRegCalendarAlt style={{color: '#040d5b'}} />: {profile.dob ? dayjs(profile.dob).format('YYYY-MM-DD') : 'N/A'}</div>
+                        <div className="profileInfoItem"> <FaMapMarkerAlt style={{color: '#040d5b'}} />{profile.country || 'N/A'}</div>
+                        <div className="profileInfoItem"><FaHome style={{color: '#040d5b'}} />{profile.address || 'N/A'}</div>
+                        <div className="profileInfoItem"><FaGraduationCap style={{color: '#040d5b'}} />{profile.study || 'N/A'}</div>
+                        <div className="profileInfoItem"><FaRegCalendarAlt style={{color: '#040d5b'}} />{profile.dob ? dayjs(profile.dob).format('YYYY-MM-DD') : 'N/A'}</div>
+                     
                     </div>
                   </div>
 
@@ -534,7 +632,14 @@ const DynamicProfilePage = () => {
                   <Drawer
                     title="Edit Profile"
                     placement="right"
-                    onClose={() => setShowEdit(false)}
+                    onClose={() => {
+                      // Clean up image previews when closing
+                      Object.values(imagePreviews).forEach(url => {
+                        if (url) URL.revokeObjectURL(url);
+                      });
+                      setImagePreviews({});
+                      setShowEdit(false);
+                    }}
                     open={showEdit}
                     width={700}
                     bodyStyle={{ padding: 24 }}
@@ -554,7 +659,7 @@ const DynamicProfilePage = () => {
                           form="editProfileForm" 
                           style={{ minWidth: 90 }} 
                           loading={formSubmitting}
-                          disabled={formSubmitting}
+                          disabled={formSubmitting || usernameError || isCheckingUsername}
                         >
                           {formSubmitting ? 'Saving...' : 'Save'}
                         </Button>
@@ -566,12 +671,44 @@ const DynamicProfilePage = () => {
                         <label className="editProfileAvatarLabel">
                           <span>Cover Image</span>
                           <input type="file" name="coverImg" accept="image/*" onChange={handleEditChange} />
-                          {editData.coverImgPreview && <img src={editData.coverImgPreview} alt="cover preview" className="profileEditCoverPreview" />}
+                          <div className="imagePreviewContainer">
+                            {(editData.coverImgPreview || editData.coverImg) && (
+                              <img 
+                                src={editData.coverImgPreview || editData.coverImg} 
+                                alt="cover preview" 
+                                className="profileEditCoverPreview" 
+                                style={{
+                                  width: '100%',
+                                  height: '120px',
+                                  objectFit: 'cover',
+                                  borderRadius: '8px',
+                                  marginTop: '8px',
+                                  border: '2px solid #e1e5e9'
+                                }}
+                              />
+                            )}
+                          </div>
                         </label>
                         <label className="editProfileAvatarLabel">
                           <span>Avatar Profile Image</span>
                           <input type="file" name="avatarImg" accept="image/*" onChange={handleEditChange} />
-                          {editData.avatarImgPreview && <img src={editData.avatarImgPreview} alt="avatar preview" className="profileEditAvatarPreview" />}
+                          <div className="imagePreviewContainer">
+                            {(editData.avatarImgPreview || editData.avatarImg) && (
+                              <img 
+                                src={editData.avatarImgPreview || editData.avatarImg} 
+                                alt="avatar preview" 
+                                className="profileEditAvatarPreview" 
+                                style={{
+                                  width: '80px',
+                                  height: '80px',
+                                  objectFit: 'cover',
+                                  borderRadius: '50%',
+                                  marginTop: '8px',
+                                  border: '2px solid #e1e5e9'
+                                }}
+                              />
+                            )}
+                          </div>
                         </label>
                       </div>
                       <div className="editProfileFieldsGrid">
@@ -580,8 +717,18 @@ const DynamicProfilePage = () => {
                           <label>Name</label>
                         </div>
                         <div className="inputGroup">
-                          <input type="text" name="username" value={editData.username} onChange={handleEditChange} required placeholder=" " />
+                          <input 
+                            type="text" 
+                            name="username" 
+                            value={editData.username} 
+                            onChange={handleEditChange} 
+                            required 
+                            placeholder=" " 
+                            style={{ borderColor: usernameError ? '#ff4d4f' : undefined }}
+                          />
                           <label>Username</label>
+                          {isCheckingUsername && <div style={{ fontSize: '12px', color: '#1890ff' }}>Checking availability...</div>}
+                          {usernameError && <div style={{ fontSize: '12px', color: '#ff4d4f' }}>{usernameError}</div>}
                         </div>
                         <div className="inputGroup">
                           <input type="number" name="age" value={editData.age || ''} onChange={handleEditChange} min="1" max="120" required placeholder=" " />
@@ -610,10 +757,10 @@ const DynamicProfilePage = () => {
                       </div>
                       </div>
                       <div className="inputGroup textareaGroup">
-                        <textarea name="bio" value={editData.bio} onChange={handleEditChange} rows={2} required placeholder=" " maxLength={40} />
+                        <textarea name="bio" value={editData.bio} onChange={handleEditChange} rows={2} required placeholder=" " maxLength={300} />
                         <label>Bio</label>
                       </div>
-                      <div className="bioCharCount">{editData.bio.length}/40</div>
+                      <div className="bioCharCount">{editData.bio.length}/300</div>
                     </form>
                   </Drawer>
                 )}
@@ -637,14 +784,14 @@ const DynamicProfilePage = () => {
                           <div className="noFollowers">No friends found.</div>
                         ) : (
                           filteredList.map(u => (
-                            <div key={u._id} className="followerRow">
-                              <Link href={`/profile/${u._id}`}>
-                                <img src={u.avatarImg || '/login.jpeg'} alt="avatar" className="followerAvatar" />
+                            <div key={u?._id || 'unknown'} className="followerRow">
+                              <Link href={`/profile/${u?._id}`}>
+                                <img src={u?.avatarImg || '/login.jpeg'} alt="avatar" className="followerAvatar" />
                               </Link>
                               <div className="followerInfo">
-                                <Link href={`/profile/${u._id}`} style={{ textDecoration: 'none' }}>
-                                  <div className="followerName">{u.fullName}</div>
-                                  <div className="followerUsername">@{u.username}</div>
+                                <Link href={`/profile/${u?._id}`} style={{ textDecoration: 'none' }}>
+                                  <div className="followerName">{u?.fullName || 'Unknown User'}</div>
+                                  <div className="followerUsername">@{u?.username || 'unknown'}</div>
                                 </Link>
                               </div>
                             </div>

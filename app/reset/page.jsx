@@ -27,7 +27,13 @@ export default function ForgotPassword() {
       dispatch(clearMessage());
       router.push("/checkemail");
     } catch (error) {
-      message.error(error || "We cannot find your email.");
+      if (error.includes('Google accounts')) {
+        message.error("This email is associated with a Google account. Please use Google login instead.");
+      } else if (error.includes('Facebook accounts')) {
+        message.error("This email is associated with a Facebook account. Please use Facebook login instead.");
+      } else {
+        message.error(error || "We cannot find your email.");
+      }
     }
   }
 

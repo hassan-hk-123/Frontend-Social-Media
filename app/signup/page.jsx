@@ -1,5 +1,4 @@
-"use client" // This must be at the very top of the file
-
+"use client"
 import { useState, useEffect } from "react"
 import { Form, Input, Checkbox, Button, message as antdMessage, Radio } from "antd"
 import Link from "next/link"
@@ -8,7 +7,11 @@ import { useRouter } from "next/navigation"
 import { Eye, EyeOff } from "lucide-react"
 import "./page.scss"
 import { useSelector, useDispatch } from 'react-redux'
-import { signup, clearError, clearMessage } from '../../store/slices/authSlice'
+import { signup, googleLogin, facebookLogin, clearError, clearMessage } from '../../store/slices/authSlice'
+import GoogleLogin from '../../components/GoogleLogin'
+import FacebookLogin from '../../components/FacebookLogin'
+import FacebookDebug from '../../components/FacebookDebug'
+import SocialLoginTest from '../../components/SocialLoginTest'
 
 export default function SignUpPage() {
   const dispatch = useDispatch()
@@ -19,10 +22,8 @@ export default function SignUpPage() {
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
 
-  // AntD message context for reliable toasts
   const [messageApi, contextHolder] = antdMessage.useMessage();
 
-  // Show error/success messages
   useEffect(() => {
     if (authMessage) {
       messageApi.success(authMessage)
@@ -50,9 +51,30 @@ export default function SignUpPage() {
     }
   }
 
+  const handleGoogleLogin = async (credentialResponse) => {
+    try {
+      await dispatch(googleLogin(credentialResponse.credential)).unwrap();
+      router.push('/');
+    } catch (err) {
+      messageApi.error('Google signup failed');
+    }
+  }
+
+  const handleFacebookLogin = async (userData) => {
+    try {
+      // Facebook login is already handled in the FacebookLogin component
+      // This function just handles the success callback
+      router.push('/');
+    } catch (err) {
+      messageApi.error('Facebook signup failed');
+    }
+  }
+
   return (
     <div className="signup-container-signup">
       {contextHolder}
+      {/* <FacebookDebug /> */}
+      {/* <SocialLoginTest /> */}
       <div className="image-section">
         <Image
           src="/sign.jpg"
@@ -66,7 +88,7 @@ export default function SignUpPage() {
       <div className="form-section-signup">
         <div className="form-content-signup">
           <h1>Sign Up</h1>
-          <p className="subtitle-signup">Sign up for free to access the  Social Media World.</p>
+          <p className="subtitle-signup">Sign up for free to access the Social Media World.</p>
 
           <Form
             form={form}
@@ -92,7 +114,6 @@ export default function SignUpPage() {
               <Input placeholder="designer@gmail.com" />
             </Form.Item>
 
-            {/* Gender Radio Group */}
             <Form.Item
               label="Gender"
               name="gender"
@@ -138,8 +159,8 @@ export default function SignUpPage() {
               }]}
             >
               <Checkbox>
-                Agree to our <Link href="/terms">Terms of use</Link> and{" "}
-                <Link href="/privacy">Privacy Policy</Link>
+                Agree to our <Link href="/terms" target="_blank" rel="noopener noreferrer">Terms of use</Link> and{" "}
+                <Link href="/privacy" target="_blank" rel="noopener noreferrer">Privacy Policy</Link>
               </Checkbox>
             </Form.Item>
 
@@ -156,14 +177,35 @@ export default function SignUpPage() {
             </Form.Item>
           </Form>
 
+          {/* OR Separator */}
+          <div className="or-separator">
+            <div className="or-line"></div>
+            <span className="or-text">OR</span>
+            <div className="or-line"></div>
+          </div>
+
+          {/* Social Login Buttons */}
+          <div className="social-login-container">
+            <div className="social-button-wrapper">
+              <GoogleLogin
+                onSuccess={handleGoogleLogin}
+                onError={() => messageApi.error('Google signup failed')}
+              />
+            </div>
+            
+            <div className="social-button-wrapper">
+              <FacebookLogin
+                onSuccess={handleFacebookLogin}
+                onError={(error) => messageApi.error(error)}
+              />
+            </div>
+          </div>
+
           <div className="login-link-signup">
             Already have an account? <Link href="/login">Log in</Link>
           </div>
         </div>
       </div>
-
-      
-
     </div>
   )
 }
