@@ -30,7 +30,8 @@ const FacebookLogin = ({ onSuccess, onError }) => {
             appId: appId,
             cookie: true,
             xfbml: true,
-            version: 'v18.0'
+            version: 'v18.0',
+            status: true
           });
           
           console.log('Facebook SDK initialized with App ID:', appId);

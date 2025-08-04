@@ -13,17 +13,24 @@ const GoogleLogin = ({ onSuccess, onError }) => {
     if (typeof window !== 'undefined' && window.google && window.google.accounts) {
       window.google.accounts.id.initialize({
         client_id: process.env.NEXT_PUBLIC_GOOGLE_CLIENT_ID,
-        callback: handleGoogleLogin
+        callback: handleGoogleLogin,
+        auto_select: false,
+        cancel_on_tap_outside: true
       });
     }
   }, []);
 
   const handleGoogleLogin = async (credentialResponse) => {
     try {
-      await dispatch(googleLogin(credentialResponse.credential)).unwrap();
+      console.log('Google login started with credential:', credentialResponse.credential ? 'Present' : 'Missing');
+      const result = await dispatch(googleLogin(credentialResponse.credential)).unwrap();
+      console.log('Google login successful, result:', result);
+      
       if (onSuccess) {
+        console.log('Calling onSuccess callback...');
         onSuccess();
       } else {
+        console.log('No onSuccess callback, redirecting to home...');
         router.push('/');
       }
     } catch (err) {

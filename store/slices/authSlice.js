@@ -23,8 +23,12 @@ const googleLogin = createAsyncThunk(
       const response = await axios.post(`${API_URL}/api/auth/google-login`, { idToken }, { withCredentials: true });
       const { userId, userName, role, user } = response.data;
       
-      // Return user data with all necessary fields
+      // Extract token from response headers or data
+      const token = response.config.headers['Authorization']?.split(' ')[1] || response.data.token;
+      
+      // Return user data with all necessary fields including token
       return {
+        token,
         userId: user._id,
         userName: user.fullName,
         username: user.username,
@@ -47,8 +51,12 @@ const facebookLogin = createAsyncThunk(
       const response = await axios.post(`${API_URL}/api/auth/facebook-login`, { accessToken }, { withCredentials: true });
       const { userId, userName, role, user } = response.data;
       
-      // Return user data with all necessary fields
+      // Extract token from response headers or data
+      const token = response.config.headers['Authorization']?.split(' ')[1] || response.data.token;
+      
+      // Return user data with all necessary fields including token
       return {
+        token,
         userId: user._id,
         userName: user.fullName,
         username: user.username,
@@ -286,6 +294,7 @@ const authSlice = createSlice({
       })
       .addCase(googleLogin.fulfilled, (state, action) => {
         state.loading = false;
+        state.token = action.payload.token;
         state.user = action.payload;
         state.isAuthenticated = true;
         localStorage.setItem('user', JSON.stringify(action.payload));
@@ -300,6 +309,7 @@ const authSlice = createSlice({
       })
       .addCase(facebookLogin.fulfilled, (state, action) => {
         state.loading = false;
+        state.token = action.payload.token;
         state.user = action.payload;
         state.isAuthenticated = true;
         localStorage.setItem('user', JSON.stringify(action.payload));

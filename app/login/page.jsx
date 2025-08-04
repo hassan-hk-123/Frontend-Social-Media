@@ -54,11 +54,14 @@ export default function LoginPage() {
     console.log("Failed:", errorInfo)
   }
 
-  const handleGoogleLogin = async (credentialResponse) => {
+  const handleGoogleLogin = async () => {
     try {
-      await dispatch(googleLogin(credentialResponse.credential)).unwrap();
+      console.log('Login page handleGoogleLogin called, redirecting to home...');
+      // Google login is already handled in the GoogleLogin component
+      // This function just handles the success callback
       router.push('/');
     } catch (err) {
+      console.error('Error in handleGoogleLogin:', err);
       messageApi.error('Google login failed');
     }
   }
